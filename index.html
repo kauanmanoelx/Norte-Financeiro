@@ -9092,7 +9092,7 @@ try { QE.keep = localStorage.getItem('norte_qe_keep') === '1'; } catch (e){}
 function qeCtx(extra){
   return Object.assign({ accounts: state.accounts || [], cards: state.creditCards || [], categories: state.categories || [], transactions: state.transactions || [], today: new Date() }, extra || {});
 }
-function qeFmt(v){ return v == null ? '' : Number(v).toFixed(2).replace('.', ','); }
+function qeFmt(v){ return v == null ? '' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function qeTitle(s){ return String(s || '').replace(/(^|\s)(\p{L})/gu, (m, sp, ch) => sp + ch.toUpperCase()); }
 
 // junta o que o analisador entendeu com o que a pessoa corrigiu na mão e arruma dependências
@@ -10515,6 +10515,123 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 }
 
 boot();
+</script>
+<script>
+/* ---------------- Máscara de dinheiro "estilo banco" ----------------
+   Em todo campo de valor, cada dígito digitado entra pela direita:
+   1 → 0,01 · 10 → 0,10 · 100 → 1,00 · 123456 → 1.234,56
+   Apagar tira o último dígito. Os campos continuam entregando ao resto do
+   app o número "puro" (ex.: "1234.56") em .value, então nenhum outro código
+   precisou mudar. Campos de valor negativo (saldo inicial) aceitam "-". */
+(function(){
+  var MAX_DIGITS = 12;                       // até 9.999.999.999,99
+  var NEG_IDS = { fInitBal: true };          // campos que aceitam valor negativo
+  var SELECTOR = 'input.num-input[step="0.01"], input#qeValue';
+  var nativeValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+
+  function fmt(cents){
+    var s = String(cents);
+    while (s.length < 3) s = '0' + s;
+    var int = s.slice(0, -2), dec = s.slice(-2);
+    return int.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + dec;
+  }
+  function parseInitial(raw, displayMode){
+    raw = String(raw == null ? '' : raw).trim();
+    if (!raw) return { cents: null, neg: false };
+    var neg = raw.charAt(0) === '-';
+    if (displayMode) raw = raw.replace(/\./g, '').replace(',', '.');   // "1.234,56" → "1234.56"
+    var n = Math.abs(parseFloat(raw));
+    if (!isFinite(n)) return { cents: null, neg: false };
+    return { cents: Math.round(n * 100), neg: neg && n !== 0 };
+  }
+
+  function enhance(el){
+    if (el._money) return;
+    el._money = true;
+    var displayMode = el.id === 'qeValue';   // qeValue já lê o texto exibido ("85,90")
+    var allowNeg = !!NEG_IDS[el.id];
+    var init = parseInitial(nativeValue.get.call(el) || el.getAttribute('value'), displayMode);
+    var state = { cents: init.cents, neg: init.neg };
+
+    el.type = 'text';
+    el.setAttribute('inputmode', 'numeric');
+    el.setAttribute('autocomplete', 'off');
+    el.removeAttribute('step'); el.removeAttribute('min'); el.removeAttribute('max');
+    if (!el.getAttribute('placeholder')) el.setAttribute('placeholder', '0,00');
+
+    function show(){
+      var txt = state.cents == null ? '' : (state.neg ? '-' : '') + fmt(state.cents);
+      nativeValue.set.call(el, txt);
+    }
+    function plain(){
+      if (state.cents == null) return '';
+      return (state.neg ? '-' : '') + (state.cents / 100).toFixed(2);
+    }
+    function toEnd(){ try { var n = el.value.length; el.setSelectionRange(n, n); } catch(e){} }
+
+    if (!displayMode){
+      Object.defineProperty(el, 'value', {
+        configurable: true,
+        get: function(){ return plain(); },
+        set: function(v){ var p = parseInitial(v, false); state.cents = p.cents; state.neg = p.neg; show(); }
+      });
+    }
+    show();
+
+    el._moneyInput = function(e){
+      var typed = nativeValue.get.call(el);
+      var deleting = !!(e.inputType && e.inputType.indexOf('delete') === 0);
+      var raw = typed.replace(/\D/g, '');
+      var digits = raw.replace(/^0+/, '');
+      if (digits.length > MAX_DIGITS) digits = digits.slice(0, MAX_DIGITS);
+      if (raw === '') state.cents = null;                       // campo esvaziado
+      else if (digits === '') state.cents = deleting ? null : 0; // só zeros
+      else state.cents = parseInt(digits, 10);
+      if (allowNeg){
+        var dashes = (typed.match(/-/g) || []).length;          // cada "-" alterna o sinal
+        state.neg = (dashes % 2 === 1) && state.cents !== null && state.cents !== 0;
+        if (dashes % 2 === 1 && state.cents == null) state.cents = 0, state.neg = false;
+      } else state.neg = false;
+      show(); toEnd();
+    };
+
+    // o cursor sempre fica no fim (os dígitos entram pela direita)
+    ['focus', 'click', 'mouseup', 'keyup', 'select'].forEach(function(ev){
+      el.addEventListener(ev, function(){ setTimeout(toEnd, 0); });
+    });
+
+    // botão ± para valores negativos (teclado do celular não tem "-")
+    if (allowNeg && el.parentNode && !el.parentNode.querySelector('.money-sign-btn')){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'money-sign-btn';
+      b.textContent = '± Alternar entre positivo e negativo';
+      b.style.cssText = 'margin-top:6px;background:none;border:0;padding:0;color:var(--text-dim);font-size:12px;cursor:pointer;text-decoration:underline;';
+      b.addEventListener('click', function(){
+        if (state.cents == null) state.cents = 0;
+        if (state.cents !== 0) state.neg = !state.neg;
+        show(); el.dispatchEvent(new Event('change', { bubbles: true })); el.focus();
+      });
+      el.insertAdjacentElement('afterend', b);
+    }
+  }
+
+  function scan(root){
+    if (!root || root.nodeType !== 1) return;
+    if (root.matches && root.matches(SELECTOR)) enhance(root);
+    var list = root.querySelectorAll ? root.querySelectorAll(SELECTOR) : [];
+    for (var i = 0; i < list.length; i++) enhance(list[i]);
+  }
+  // um único ouvinte no document (fase de captura): roda antes de qualquer outro
+  // código do app, que então já enxerga o valor atualizado
+  document.addEventListener('input', function(e){ if (e.target && e.target._moneyInput) e.target._moneyInput(e); }, true);
+  scan(document.body);
+  new MutationObserver(function(muts){
+    for (var i = 0; i < muts.length; i++)
+      for (var j = 0; j < muts[i].addedNodes.length; j++) scan(muts[i].addedNodes[j]);
+  }).observe(document.body, { childList: true, subtree: true });
+
+  window.__moneyMask = { fmt: fmt };
+})();
 </script>
 </body>
 </html>
