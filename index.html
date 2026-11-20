@@ -1165,11 +1165,15 @@ tr:hover td{background:var(--surface-2);}
 }
 .tour-card.center{position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); max-width:420px;}
 .tour-eyebrow{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--accent); margin-bottom:8px; display:flex; align-items:center; gap:8px;}
-.tour-eyebrow .dots{display:flex; gap:4px; margin-left:auto;}
+.tour-eyebrow #tourStepLabel{white-space:nowrap;}
+.tour-eyebrow .dots{flex:1; min-width:30px; height:4px; margin-left:8px; border-radius:999px; background:var(--border); overflow:hidden;}
+.tour-eyebrow .dots i{display:block; height:100%; border-radius:999px; background:var(--accent); transition:width .3s var(--ease);}
 .tour-eyebrow .dots span{width:5px; height:5px; border-radius:50%; background:var(--border);}
 .tour-eyebrow .dots span.on{background:var(--accent);}
 .tour-card h3{font-size:19px; font-family:var(--font-display); font-weight:400; margin-bottom:10px;}
-.tour-card .body{font-size:13.5px; color:var(--text-dim); line-height:1.65; max-height:38vh; overflow-y:auto;}
+.tour-card .body{font-size:13.5px; color:var(--text-dim); line-height:1.65; max-height:46vh; overflow-y:auto;}
+.tour-card .body.scrolls{-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 28px),transparent); mask-image:linear-gradient(to bottom,#000 calc(100% - 28px),transparent);}
+.tour-card .body.scrolls.at-end{-webkit-mask-image:none; mask-image:none;}
 .tour-card .body b{color:var(--text); font-weight:600;}
 .tour-card .body .example{
   margin-top:10px; padding:10px 12px; border-radius:10px; background:var(--surface-2);
@@ -1368,7 +1372,7 @@ body.readonly-mode #fCatNewBtn, body.readonly-mode #fCatNewAddBtn
             <div class="hero-seg" id="heroSeg" role="tablist" aria-label="Tipo de saldo"></div>
             <div class="hero-accs hidden" id="heroAccs"></div>
           </div>
-          <div class="card kpi" style="display:flex; flex-direction:column; justify-content:center;">
+          <div class="card kpi" id="projCard" style="display:flex; flex-direction:column; justify-content:center;">
             <div class="kpi-head">
               <div class="label">Projeção até o fim do mês</div>
               <div class="kpi-icon tone-accent">
@@ -1392,7 +1396,7 @@ body.readonly-mode #fCatNewBtn, body.readonly-mode #fCatNewAddBtn
             <button type="button" data-months="12">12 meses</button>
           </div>
         </div>
-        <div class="grid grid-4" style="margin-top:16px;">
+        <div class="grid grid-4" id="kpiGrid" style="margin-top:16px;">
           <div class="card kpi">
             <div class="kpi-head"><div class="label">Receitas do mês</div><div class="kpi-icon tone-pos">
               <svg class="icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
@@ -3522,7 +3526,7 @@ function renderOnboarding(){
         <div class="onboarding-step ${hasAccount?'done':''}">
           <div class="num">${hasAccount?'✓':'1'}</div>
           <h5>Crie uma conta</h5>
-          <p>Carteira, conta corrente, poupança — onde seu dinheiro está guardado.</p>
+          <p>Uma para cada banco ou fintech que você usa (Nubank, Inter…) e, se quiser, uma "Carteira" para o dinheiro em espécie. O Norte <b>não conecta ao banco</b>: você informa o saldo de hoje e vai lançando o resto.</p>
           ${!hasAccount ? '<button class="btn btn-primary btn-sm" data-action="onb-account">Criar conta</button>' : ''}
         </div>
         <div class="onboarding-step ${hasCategory?'done':''}">
@@ -3534,7 +3538,7 @@ function renderOnboarding(){
         <div class="onboarding-step ${hasTx?'done':''}">
           <div class="num">${hasTx?'✓':'3'}</div>
           <h5>Lance sua primeira transação</h5>
-          <p>Registre uma receita ou despesa para começar a ver seus números.</p>
+          <p>Registre uma receita ou despesa para começar a ver seus números. Dica: "Lançar por frase" faz isso em segundos (ex.: mercado 85,90).</p>
           ${hasAccount ? '<button class="btn btn-primary btn-sm" data-action="onb-tx">Nova transação</button>' : ''}
         </div>
       </div>
@@ -9399,6 +9403,7 @@ function openAccountModal(id){
   if (editing && editing.type === 'Carteira' && mode === 'bank') bankTypes.splice(1, 0, 'Carteira');
   const html = `<div class="modal-head"><h3>${editing ? 'Editar conta' : 'Nova conta'}</h3><button class="btn btn-icon btn-ghost" data-action="close" aria-label="Fechar">✕</button></div>
     <div class="modal-body">
+      <div class="acc-cash-note" id="fBankNote">${ICONS.accounts}<span><b>O Norte não se conecta ao banco.</b> Crie aqui uma conta com o mesmo nome da sua conta real (Nubank, Inter, Itaú…) e informe o saldo de hoje. Depois é só lançar suas receitas e despesas: o Norte mantém o saldo atualizado, sem pedir senha nem acessar o seu banco.</span></div>
       <div class="field"><label>O que você quer adicionar?</label>
         <div class="acc-kind" role="radiogroup" aria-label="Tipo de conta">
           <button type="button" class="acc-kind-opt" data-kind="bank" role="radio">${ICONS.accounts}<b>Banco ou fintech</b><small>Nubank, Inter, Mercado Pago…</small></button>
@@ -9417,7 +9422,7 @@ function openAccountModal(id){
       <div class="field" id="fTypeField"><label>Tipo</label><select id="fType">
         ${bankTypes.map(t => `<option ${editing && editing.type === t ? 'selected' : ''}>${t}</option>`).join('')}
       </select></div>
-      <div class="field"><label id="fBalLabel">Saldo inicial (R$)</label><input type="number" step="0.01" class="num-input" id="fInitBal" value="${editing ? editing.initialBalance : '0'}"></div>
+      <div class="field"><label id="fBalLabel">Saldo inicial (R$)</label><input type="number" step="0.01" class="num-input" id="fInitBal" value="${editing ? editing.initialBalance : '0'}"><div class="horizon-hint" id="fBalHint"></div></div>
       ${editing ? '<p style="font-size:12px;color:var(--text-faint);">O saldo inicial é somado ao histórico de transações para calcular o saldo atual.</p>' : ''}
     </div>
     <div class="modal-foot"><button class="btn btn-ghost" data-action="cancel">Cancelar</button><button class="btn btn-primary" data-action="save">${editing ? 'Salvar' : 'Adicionar'}</button></div>`;
@@ -9443,6 +9448,8 @@ function openAccountModal(id){
     root.querySelectorAll('.acc-kind-opt').forEach(o => { const on = o.dataset.kind === m; o.classList.toggle('active', on); o.setAttribute('aria-checked', on ? 'true' : 'false'); });
     root.querySelector('#fTypeField').style.display = m === 'cash' ? 'none' : '';
     root.querySelector('#fCashNote').style.display = m === 'cash' ? '' : 'none';
+    root.querySelector('#fBankNote').style.display = m === 'cash' ? 'none' : '';
+    root.querySelector('#fBalHint').textContent = m === 'cash' ? 'Conte o dinheiro que está com você agora e informe o total.' : 'Informe quanto você tem nesta conta hoje, como aparece no app do seu banco. A partir daí, o Norte soma e subtrai o que você lançar.';
     root.querySelector('#fNameLabel').textContent = m === 'cash' ? 'Nome da carteira' : 'Nome';
     root.querySelector('#fBalLabel').textContent = m === 'cash' ? 'Quanto você tem em mãos hoje (R$)' : 'Saldo inicial (R$)';
     nameEl.placeholder = m === 'cash' ? 'Ex: Carteira, Cofre, Dinheiro de casa...' : 'Ex: Mercado Pago, Nubank, Itaú, Santander...';
@@ -10237,124 +10244,247 @@ function initAppUI(){
 const TOUR_SEEN_KEY = 'norte_tour_seen_v1';
 let tourState = { active: false, index: 0 };
 const TOUR_STEPS = [
+  /* ---------- Começo: o que é o Norte e como ele funciona ---------- */
   {
     title: 'Bem-vindo(a) ao Norte',
-    body: `Este é um tour rápido pelas principais funções do app — leva menos de 2 minutos. Você pode sair a qualquer momento clicando em <b>"Pular tour"</b>, e reabrir depois quando quiser clicando no ícone de <b>interrogação (?)</b> no canto superior direito da tela.`,
+    body: `O Norte é o seu <b>controle financeiro pessoal</b>: você anota o dinheiro que entra e o que sai, e ele organiza tudo — saldo, gastos por categoria, cartões, contas a pagar, metas e muito mais. Este tour leva uns 3 minutos e mostra, tela por tela, para que serve cada coisa. Use <b>Próximo</b> e <b>Voltar</b> (ou as setas do teclado) e <b>"Pular tour"</b> para sair quando quiser. Para rever depois, clique no ícone de <b>interrogação (?)</b> no topo da tela.`,
   },
   {
-    view: 'dashboard', target: '#profileSwitcher', title: 'Perfis',
-    body: `Aqui em cima ficam os seus <b>perfis</b>. Cada perfil é um "livro-caixa" completamente separado, com suas próprias contas, transações, orçamentos, metas e cartões — nada se mistura entre um perfil e outro.`,
-    example: `Use um perfil <b>"Pessoal"</b> pro seu dia a dia e outro <b>"Empresa"</b> ou <b>"Família"</b> pra organizar um dinheiro à parte, sem misturar os números. Clique duas vezes num perfil pra editar nome e cor, ou no "+ Novo" pra criar outro. Só o perfil principal (o primeiro que você criou) não pode ser excluído.`,
+    title: 'Importante: o Norte não se conecta ao seu banco',
+    body: `O Norte <b>não acessa a sua conta no banco</b> — ele nunca pede sua senha nem lê seus dados bancários. O que você faz aqui é criar uma <b>cópia</b> de cada conta que você realmente tem e ir anotando o que acontece nela. É simples: <b>1)</b> crie uma conta no Norte para cada banco, fintech ou carteira que você usa de verdade; <b>2)</b> informe quanto você tem em cada uma hoje (o <b>saldo inicial</b>); <b>3)</b> lance suas receitas e despesas — o Norte atualiza os saldos sozinho.`,
+    example: `Quanto mais fiel você for ao que acontece de verdade, mais o saldo do Norte bate com o do seu banco. Se um dia ficar diferente, confira os lançamentos e, se precisar, edite a conta para corrigir o saldo inicial.`,
+  },
+
+  /* ---------- Passo 1: contas, cofrinhos, categorias ---------- */
+  {
+    view: 'accounts', target: '#addAccountBtn', title: 'Passo 1: crie suas contas',
+    body: `Clique em <b>Nova conta</b> e escolha o que quer adicionar: <b>Banco ou fintech</b> (Nubank, Inter, Mercado Pago, Itaú…) ou <b>Carteira física</b> (o dinheiro em espécie que você tem em mãos). Use o <b>mesmo nome</b> da conta real — o Norte reconhece a logo dos bancos mais comuns — e informe o <b>saldo inicial</b>: quanto você tem ali <b>hoje</b>, como aparece no app do seu banco. Nas contas de banco você ainda escolhe o tipo: corrente, poupança, investimentos ou outro.`,
+    example: `Tem R$ 1.250,00 no Nubank e R$ 80,00 em dinheiro na bolsa? Crie <b>"Nubank" com saldo 1.250,00</b> e <b>"Carteira" com saldo 80,00</b>. O Saldo total do Norte já começa certo: R$ 1.330,00.`,
   },
   {
-    view: 'dashboard', target: '[data-nav="dashboard"]', title: 'Dashboard',
-    body: `A tela inicial, com a visão geral do mês: <b>Saldo total</b> das suas contas, <b>Receitas</b>, <b>Despesas</b> e <b>Resultado</b>, além de um <b>"Raio-x financeiro"</b> que destaca automaticamente coisas como seu maior gasto do mês, o dia da semana que mais pesa no bolso e a categoria que mais cresceu em relação ao mês anterior.`,
-    example: `Quando você tiver cartões de crédito e um histórico de meses, também aparecem aqui um resumo da sua <b>Saúde Financeira</b>, o <b>limite usado nos cartões</b> e um gráfico de fluxo de caixa dos últimos 6 meses.`,
+    view: 'accounts', target: '#addTransferBtn', title: 'Transferir entre contas',
+    body: `Passou dinheiro de uma conta para outra — sacou no caixa eletrônico, moveu do Nubank para a poupança? Registre em <b>Transferir</b>. O valor sai de uma conta e entra na outra, e <b>não conta como receita nem como despesa</b>, porque o dinheiro continua sendo seu.`,
   },
   {
-    view: 'transactions', target: '#addTxBtn', title: 'Nova transação',
-    body: `Por aqui — ou pelo atalho de teclado <b>N</b>, em qualquer tela do app — você lança receitas, despesas e transferências entre contas. Dá pra marcar como <b>recorrente</b>, <b>parcelar</b> em várias vezes, anexar uma <b>foto do comprovante</b> e escolher a <b>forma de pagamento</b>: Pix, boleto, dinheiro, transferência, cartão de crédito ou débito.`,
-    example: `Uma compra de R$ 900 parcelada em 3x no cartão de crédito vira 3 lançamentos de R$ 300 — cada um cai na fatura certa, e o valor só sai do seu saldo de verdade quando você pagar aquela fatura, não na hora da compra.`,
+    view: 'accounts', target: '[data-action="envelopes"]', title: 'Cofrinhos',
+    body: `Cada conta tem o botão de <b>cofrinhos</b> (o ícone de porquinho). Use para separar uma parte do saldo para um destino — reserva, viagem, imposto… — sem abrir outra conta. <b>Não move dinheiro de verdade</b>: só desconta do que aparece como "disponível".`,
+    example: `Nubank com R$ 3.000 e um cofrinho "Reserva de emergência" de R$ 1.000: o Norte mostra <b>R$ 2.000 disponíveis</b> para o dia a dia, e os R$ 1.000 ficam guardados à parte.`,
+  },
+  {
+    view: 'accounts', target: '#addCategoryBtn', title: 'Categorias',
+    body: `Categorias classificam cada receita e despesa (Salário, Mercado, Transporte…) e alimentam os gráficos, orçamentos e relatórios. O Norte já traz algumas prontas. Você pode <b>criar novas</b>, escolher ícone e cor e até criar <b>subcategorias</b>, usando o campo "Categoria-pai".`,
+    example: `Crie "Mercado" como subcategoria de "Alimentação": assim você vê o total de Alimentação e, ao mesmo tempo, quanto foi só de mercado.`,
+  },
+
+  /* ---------- Passo 2: lançar o dia a dia ---------- */
+  {
+    view: 'transactions', target: '#addTxBtn', title: 'Passo 2: registre seus lançamentos',
+    body: `É aqui que você anota o dia a dia — também pelo atalho <b>N</b>, em qualquer tela. Escolha o tipo (<b>receita</b>, <b>despesa</b> ou <b>transferência</b>), o valor, a data, a descrição, a categoria, a conta e a forma de pagamento (Pix, cartão de débito ou de crédito, boleto, dinheiro ou transferência). Também dá para <b>parcelar</b>, marcar como <b>recorrente</b>, anexar a <b>foto do comprovante</b>, colocar num <b>grupo</b>, <b>dividir o gasto com alguém</b> e anotar como você se sentiu sobre ele.`,
+    example: `Uma compra de R$ 900 em 3x no cartão de crédito vira <b>3 lançamentos de R$ 300</b>, um em cada mês. O dinheiro só sai da sua conta quando você paga a fatura, não na hora da compra.`,
+  },
+  {
+    view: 'dashboard', target: ['#dashboardQuickBtn', '#dashboardQuickFab'], title: 'Lançar por frase (o jeito mais rápido)',
+    body: `Em vez de preencher o formulário, <b>escreva ou fale</b> uma frase e o Norte monta o lançamento para você. Antes de salvar ele mostra uma <b>prévia</b> para você conferir e corrigir. Atalho: tecla <b>Q</b>. O botão <b>"Mais detalhes"</b> abre o formulário completo, e <b>"Continuar lançando"</b> mantém a janela aberta para anotar vários de uma vez.`,
+    example: `Experimente digitar <b>mercado 85,90</b>. O botão do microfone só aparece nos navegadores que permitem falar.`,
   },
   {
     view: 'transactions', target: '[data-nav="transactions"]', title: 'Transações',
-    body: `A lista completa de tudo que você já lançou. Dá pra <b>filtrar</b> por tipo, categoria, conta, grupo e período, <b>buscar</b> por descrição, <b>duplicar</b> um lançamento parecido (bom pra gastos repetidos) ou <b>exportar em CSV</b>.`,
-    example: `Filtre só as despesas da categoria "Mercado" no mês passado pra ver rapidinho quanto você gastou especificamente com isso.`,
+    body: `Todos os seus lançamentos num só lugar. Dá para <b>buscar</b> por descrição, <b>filtrar</b> por tipo, categoria, conta, grupo e período, <b>editar</b>, <b>duplicar</b> um lançamento parecido (bom para gastos que se repetem) e <b>exportar em CSV</b>. Os gastos que você dividiu com alguém ficam em <b>"Acertos pendentes"</b> até você marcar como acertado.`,
+    example: `Filtre só as despesas de "Mercado" do mês passado para ver rapidinho quanto você gastou com isso.`,
+  },
+
+  /* ---------- Dashboard ---------- */
+  {
+    view: 'dashboard', target: '[data-nav="dashboard"]', title: 'Dashboard',
+    body: `A tela inicial: um resumo de como estão as suas finanças <b>neste mês</b>. Nos próximos passos vamos olhar cada bloco dela.`,
+  },
+  {
+    view: 'dashboard', target: '#saldoHero', title: 'Saldo disponível',
+    body: `O destaque da tela é quanto você tem <b>disponível</b>: a soma das suas contas, já descontando o que você separou em cofrinhos. O <b>olhinho</b> esconde os valores (ótimo para usar em público). Troque entre <b>Disponível</b> e <b>Cofrinhos</b> e toque numa conta ou cofrinho para ver os detalhes dele.`,
+  },
+  {
+    view: 'dashboard', target: '#projCard', title: 'Projeções',
+    body: `Aqui o Norte mostra <b>como o seu saldo deve chegar ao fim do mês</b>, já considerando as contas fixas que ainda não foram lançadas. Logo abaixo, o cartão <b>"Seu dinheiro daqui a…"</b> estima quanto você terá em 3, 6 ou 12 meses se o seu ritmo atual continuar. São estimativas, não garantias. Se você usa cofrinhos, dá para escolher se a conta considera só o dia a dia ou também os cofrinhos.`,
+  },
+  {
+    view: 'dashboard', target: '#kpiGrid', title: 'Receitas, despesas e resultado',
+    body: `Os números do mês: <b>Receitas</b> (o que entrou), <b>Despesas</b> (o que saiu), <b>Resultado</b> (receitas menos despesas) e quantos <b>lançamentos</b> você fez. Cada um mostra a comparação com o mês anterior.`,
+  },
+  {
+    view: 'dashboard', target: '#healthCardsRow', title: 'Saúde financeira e cartões no Dashboard',
+    body: `Dois resumos rápidos: a sua <b>nota de saúde financeira</b> do mês e, se você tiver cartões de crédito, o <b>limite usado</b> em cada um. Os detalhes completos ficam nas telas <b>Saúde Financeira</b> e <b>Cartões</b>.`,
+  },
+  {
+    view: 'dashboard', target: ['#dashboardInsights', '#dashboardAlerts', '#dashboardUpcoming'], title: 'Alertas, Raio-x e próximos vencimentos',
+    body: `Mais abaixo, o Norte <b>avisa</b> quando um orçamento passou do limite, quando há contas fixas ou itens a pagar para lançar ou atrasados e quando um lembrete chegou. O <b>Raio-x financeiro</b> destaca coisas como o seu maior gasto do mês, o dia da semana que mais pesa no bolso e a categoria que mais cresceu. Os próximos vencimentos também aparecem por aqui.`,
+  },
+  {
+    view: 'dashboard', target: '#dashboardCharts', title: 'Gráficos',
+    missingNote: `os gráficos aparecem depois que você tiver lançamentos — ou estão escondidos porque o modo <b>"Só números"</b> está ligado. Para vê-los, clique em <b>"Mostrar gráficos"</b>.`,
+    body: `Três gráficos: o <b>fluxo de caixa</b> (receitas x despesas) dos últimos 6 meses, as <b>despesas por categoria</b> do mês (dá para alternar para receitas) e a evolução do seu <b>patrimônio</b> (o total do seu dinheiro) ao longo dos meses.`,
+  },
+  {
+    view: 'dashboard', target: '#numbersOnlyToggle', title: 'Só números',
+    body: `Prefere uma tela mais limpa? <b>"Só números"</b> esconde os gráficos e deixa apenas os valores. Clique de novo em <b>"Mostrar gráficos"</b> para voltar.`,
+  },
+  {
+    view: 'dashboard', target: '#petCard', title: 'Seu bichinho',
+    missingNote: `o bichinho fica escondido enquanto o modo <b>"Só números"</b> está ligado. Para vê-lo, clique em <b>"Mostrar gráficos"</b>.`,
+    body: `Adote um bichinho virtual! Ele <b>evolui</b> conforme você usa o app, e o humor dele muda com a sua saúde financeira: contas atrasadas o deixam preocupado e alguns dias sem lançar o fazem dormir. Ele nunca perde nível. Quem prefere o app mais sério pode escondê-lo com o botão "Só números".`,
+  },
+
+  /* ---------- Telas do menu ---------- */
+  {
+    view: 'catexplorer', target: '[data-nav="catexplorer"]', title: 'Por Categoria',
+    body: `Escolha uma categoria e veja <b>quanto entrou ou saiu nela</b> — em todo o histórico ou num ano, mês, dia ou período que você definir. A tela mostra o total, o maior lançamento, a divisão em subcategorias, a evolução ao longo do tempo e a lista dos lançamentos.`,
+    example: `Pesquise "Alimentação" e escolha "Mês" para ver exatamente quanto foi gasto com comida neste mês.`,
   },
   {
     view: 'cards', target: '[data-nav="cards"]', title: 'Cartões',
-    body: `Cadastre seus cartões de <b>crédito</b> (com limite, dia de fechamento e de vencimento) ou <b>débito</b>. Nos cartões de crédito, o app acompanha sozinho o <b>limite usado</b> e monta a <b>fatura</b> automaticamente, agrupando as compras lançadas com a forma de pagamento "Cartão de crédito".`,
-    example: `Ao clicar num cartão, você vê a fatura atual detalhada, com cada compra listada, e pode tocar em <b>"Pagar fatura"</b> — isso lança uma despesa na conta que você escolher e marca aquela fatura como paga.`,
+    body: `Cadastre seus cartões de <b>crédito</b> (com limite, dia de fechamento e dia de vencimento) ou de <b>débito</b>. Nos de crédito, o Norte acompanha sozinho o <b>limite usado</b> e monta a <b>fatura</b> com as compras lançadas na forma de pagamento "Cartão de crédito". O menu avisa quando uma fatura está perto de vencer.`,
+    example: `Ao abrir um cartão você vê a fatura atual compra por compra. Toque em <b>"Pagar fatura"</b>, escolha de qual conta o dinheiro sai, e o Norte lança a despesa e marca a fatura como paga.`,
   },
   {
     view: 'fixedbills', target: '[data-nav="fixedbills"]', title: 'Contas fixas',
-    body: `Cadastre contas que se repetem (mensal, semanal ou anual), como aluguel, internet, streaming ou salário. O app avisa quando está perto do vencimento e deixa lançar a transação correspondente com um clique.`,
-    example: `Cadastre <b>"Aluguel — R$ 1.800, todo dia 5"</b> uma única vez, e nos meses seguintes é só confirmar o lançamento em vez de digitar tudo de novo.`,
+    body: `Cadastre o que se repete — <b>despesas</b> (aluguel, internet, assinaturas) ou <b>receitas</b> (salário) — por mês, semana ou ano. O Norte avisa quando o vencimento está perto, e você lança com um clique em <b>"Lançar agora"</b>. Se preferir, marque <b>"Debitar automaticamente"</b> e ele lança sozinho no dia. Para compras parceladas, informe o número de parcelas e a conta se encerra no fim. O Norte também percebe gastos que parecem assinatura e sugere transformá-los em conta fixa.`,
+    example: `Cadastre <b>"Aluguel — R$ 1.800, todo dia 5"</b> uma única vez. Nos meses seguintes é só confirmar, sem digitar tudo de novo.`,
+  },
+  {
+    view: 'payables', target: '[data-nav="payables"]', title: 'A Pagar / A Receber',
+    body: `Para o que ainda <b>vai acontecer</b> e não é uma conta fixa: um dinheiro que você <b>precisa pagar</b> ou que alguém <b>precisa te pagar</b>, com descrição, valor, vencimento e a pessoa ou empresa. No topo você vê o total a pagar, o total a receber e o saldo pendente. Ao <b>marcar como pago ou recebido</b>, você escolhe a conta e o Norte lança a transação para você. Itens atrasados aparecem como alerta.`,
+    example: `A Marina te deve R$ 150 do almoço? Cadastre em "A receber". Quando ela pagar, clique em <b>"Marcar como recebido"</b> e escolha a conta onde o dinheiro caiu.`,
   },
   {
     view: 'budgets', target: '[data-nav="budgets"]', title: 'Orçamentos',
-    body: `Defina um <b>limite mensal de gasto</b> por categoria e acompanhe visualmente quanto já foi consumido daquele limite, com uma barra de progresso.`,
-    example: `Um orçamento de <b>R$ 600 para "Restaurantes"</b> mostra uma barra que fica amarela perto do limite e vermelha se você estourar — assim dá pra frear antes de passar do combinado.`,
+    body: `Defina um <b>limite mensal de gasto</b> por categoria e acompanhe quanto já foi usado, com uma barra de progresso. O Norte avisa quando um orçamento passa de 80% e quando ele estoura. No topo você vê o total planejado, o total gasto e quantas categorias chegaram ao limite.`,
+    example: `Um orçamento de <b>R$ 600 para "Restaurantes"</b> mostra a barra enchendo ao longo do mês — assim você freia antes de passar do combinado.`,
   },
   {
     view: 'goals', target: '[data-nav="goals"]', title: 'Metas',
-    body: `Metas de economia com um valor alvo e, se quiser, um prazo — o app mostra o progresso e, quando há prazo, se você está no ritmo certo pra chegar lá a tempo.`,
-    example: `Uma meta <b>"Viagem — R$ 5.000 até dezembro"</b>, vinculada a uma conta poupança específica, mostra o quanto já foi guardado ali e quanto ainda falta por mês pra bater o valor no prazo.`,
+    body: `Metas de economia com <b>valor alvo</b> e, se quiser, <b>prazo</b>. Elas ficam em três colunas: curto prazo (até 6 meses), médio (6 meses a 2 anos) e longo (mais de 2 anos). Você pode <b>vincular a meta a uma conta</b> — aí o progresso acompanha o saldo dela — ou controlar o valor à mão. Também dá para ligar o <b>aporte automático</b> (todo mês, no dia que escolher) e usar <b>"Comparar metas"</b> para ver várias lado a lado.`,
+    example: `Meta <b>"Viagem — R$ 5.000 até dezembro"</b> ligada à sua poupança: a barra mostra quanto já foi guardado e quanto falta.`,
   },
   {
     view: 'health', target: '[data-nav="health"]', title: 'Saúde Financeira',
-    body: `Uma nota de 0% a 100%, calculada automaticamente com base em 6 fatores: taxa de poupança do mês, comprometimento com contas fixas, orçamentos respeitados, tendência de patrimônio, dependência de parcelamento e metas em dia.`,
-    example: `Se boa parte da sua renda está comprometida com contas fixas, esse fator específico puxa a nota geral pra baixo — e a tela mostra, fator por fator, exatamente o porquê da nota estar do jeito que está.`,
-  },
-  {
-    view: 'accounts', target: '[data-nav="accounts"]', title: 'Contas & Categorias',
-    body: `Aqui ficam suas <b>contas bancárias</b> (corrente, carteira, poupança, investimentos), cada uma com um saldo inicial, e as <b>categorias</b> usadas pra classificar receitas e despesas.`,
-    example: `Crie uma conta <b>"Carteira"</b> pro dinheiro físico e categorias como "Salário", "Freelance", "Alimentação", "Transporte" — o app já vem com algumas categorias comuns criadas, mas você pode ajustar do seu jeito.`,
+    body: `Uma nota de 0% a 100%, calculada automaticamente com base em 6 fatores: taxa de poupança do mês, comprometimento com contas fixas, orçamentos respeitados, tendência do patrimônio, dependência de parcelamento e metas em dia. A tela mostra o peso de cada fator, a evolução dos últimos 6 meses, <b>dicas do que melhorar</b> e suas <b>conquistas</b>.`,
+    example: `Se boa parte da sua renda está comprometida com contas fixas, esse fator puxa a nota para baixo — e a tela mostra, fator por fator, o porquê da nota.`,
   },
   {
     view: 'groups', target: '[data-nav="groups"]', title: 'Grupos',
-    body: `Um jeito de juntar várias transações sob uma mesma "etiqueta", pra ver o gasto total daquilo — independente da categoria de cada lançamento. Dá pra criar um grupo novo direto na tela de nova transação, sem precisar sair dela.`,
-    example: `Crie um grupo <b>"Viagem Nordeste"</b> e marque nele as passagens, a hospedagem e os passeios — mesmo sendo categorias diferentes (Transporte, Lazer), você enxerga o total gasto na viagem inteira num só lugar.`,
+    body: `Junte lançamentos de qualquer categoria ou conta sob um mesmo rótulo e veja o <b>total daquele "capítulo"</b> de uma vez — uma viagem, uma reforma, um evento. Dá para criar <b>subgrupos</b> dentro de um grupo, e o total do grupo principal já soma os subgrupos. Você também pode criar um grupo novo direto na tela de nova transação.`,
+    example: `Grupo <b>"Viagens"</b> com o subgrupo <b>"Nordeste 2026"</b>: passagens, hospedagem e passeios entram no mesmo lugar, mesmo sendo categorias diferentes.`,
   },
   {
     view: 'reports', target: '[data-nav="reports"]', title: 'Relatórios',
-    body: `Análises mais profundas do seu histórico: comparação de receitas x despesas por período, gastos por categoria e evolução do patrimônio ao longo do tempo, com opção de imprimir ou exportar.`,
+    body: `Escolha um <b>período</b> (de/até) e, se quiser, <b>compare</b> com o período anterior equivalente ou com o mesmo período do ano passado. Você vê o resultado líquido, o gasto médio por dia, quantos lançamentos houve, receitas x despesas e as despesas por categoria. Os <b>fechamentos mensais</b> guardam um resumo de cada mês já encerrado, e dá para <b>exportar em PDF</b>.`,
   },
   {
     view: 'calculator', target: '[data-nav="calculator"]', title: 'Calculadora & Simulações',
-    body: `Ferramentas de simulação financeira, como projeção de juros compostos.`,
-    example: `Simule quanto tempo leva pra juntar R$ 20.000 guardando R$ 500 por mês a uma taxa de juros escolhida — útil pra planejar uma meta antes mesmo de criá-la na aba Metas.`,
+    body: `Duas ferramentas: uma <b>calculadora</b> comum (funciona também com o teclado do computador) e o simulador <b>Juros & Investimentos</b>, com juros compostos ou simples. Nele você escolhe o que quer descobrir: o <b>valor final</b>, o <b>aporte mensal necessário</b> ou o <b>tempo necessário</b>, e vê um gráfico e uma tabela mês a mês. É uma simulação educativa, não uma recomendação de investimento.`,
+    example: `Descubra quanto tempo leva para juntar R$ 20.000 guardando R$ 500 por mês a uma taxa que você escolher — útil para planejar uma meta antes de criá-la.`,
   },
   {
     view: 'aichat', target: '[data-nav="aichat"]', title: 'Chat com IA',
-    body: `Um espaço pra tirar dúvidas ou pedir dicas sobre suas próprias finanças, conversando diretamente dentro do app.`,
+    body: `Um assistente para tirar dúvidas e pedir dicas sobre as suas finanças, conversando dentro do app. Ele recebe só um <b>resumo dos seus números</b> (não os lançamentos um por um) e dá orientação educativa, não consultoria financeira.`,
+    example: `Este recurso depende de uma configuração no servidor, feita por quem administra o app. Se aparecer um aviso de erro ao conversar, é porque ela ainda não foi ativada.`,
   },
   {
     view: 'notes', target: '[data-nav="notes"]', title: 'Notas & Lembretes',
-    body: `Anotações soltas e lembretes com data — pra guardar informações que não são bem uma transação financeira.`,
-    example: `Algo como <b>"Ligar pro banco sobre a fatura"</b> ou <b>"Renovar o seguro do carro em outubro"</b> — o app avisa quando a data do lembrete estiver chegando perto.`,
+    body: `Um bloco de notas livre: compromissos, ideias, listas de itens — o que fizer sentido para você. Organize com <b>etiquetas</b>, defina <b>data e hora</b> e peça um <b>aviso</b> na hora marcada (com o app aberto no navegador), e vincule a nota a um <b>grupo</b>. Para guardar algo sigiloso, crie uma <b>nota privada</b>, protegida por uma senha só sua.`,
+    example: `Algo como <b>"Ligar para o banco sobre a fatura"</b> ou <b>"Renovar o seguro do carro em outubro"</b>.`,
   },
   {
-    view: 'settings', target: '[data-nav="settings"]', title: 'Conta',
-    body: `Sua área pessoal: <b>foto de perfil</b>, <b>e-mail</b> cadastrado e botão pra <b>redefinir a senha</b>. É também aqui que fica o <b>backup dos seus dados</b> — baixar em .json, exportar em planilha Excel ou restaurar um backup anterior.`,
-    example: `Antes de "Limpar todos os dados" pra testar algo, sempre vale <b>baixar um backup primeiro</b> — é só um clique em "Baixar backup (.json)".`,
+    view: 'settings', target: '[data-nav="settings"]', title: 'Conta e backup',
+    body: `Sua área pessoal: <b>foto de perfil</b>, <b>e-mail</b> cadastrado e o botão para <b>redefinir a senha</b>. Aqui também ficam os <b>backups</b>: baixar todos os seus dados em .json, importar um backup anterior ou exportar uma planilha Excel (só para consulta). Mais abaixo, a "Zona de risco" apaga todos os dados — use com muito cuidado.`,
+    example: `Antes de qualquer teste maior, <b>baixe um backup</b>: é só um clique em "Baixar backup (.json)". Para restaurar, use sempre o .json.`,
+  },
+
+  /* ---------- Barra lateral e topo ---------- */
+  {
+    view: 'dashboard', target: '#profileSwitcher', title: 'Perfis',
+    body: `Aqui em cima ficam os seus <b>perfis</b>. Cada perfil é um "livro-caixa" totalmente separado, com suas próprias contas, transações, orçamentos, metas e cartões — nada se mistura. Clique em <b>"+ Novo"</b> para criar outro e dê <b>dois cliques</b> num perfil para editar nome e cor. Só o perfil principal não pode ser excluído.`,
+    example: `Use um perfil <b>"Pessoal"</b> para o dia a dia e outro <b>"Empresa"</b> ou <b>"Família"</b> para um dinheiro à parte.`,
+  },
+  {
+    target: '.save-status', title: 'Salvamento dos dados',
+    body: `Este indicador mostra se os seus dados estão sendo <b>salvos</b>: "Salvando…", "Salvo às…" quando já está na nuvem ou um aviso se algo falhar. Seus dados também ficam guardados neste aparelho, então um problema de internet não faz você perder o que lançou.`,
+  },
+  {
+    target: '#notifBtn', title: 'Notificações',
+    body: `O sino é onde você escolhe os avisos: <b>2 dias antes</b>, <b>1 dia antes</b> e <b>no dia</b> do vencimento das suas contas, além de um aviso ao adicionar uma transação. Ele também lista os próximos vencimentos dos próximos 7 dias. Toque em <b>Ativar</b> e permita as notificações no navegador. No iPhone, primeiro instale o app: Compartilhar → Adicionar à Tela de Início.`,
+    example: `Os avisos chegam com o app aberto ou em segundo plano. Para chegarem com o app totalmente fechado, é preciso uma configuração extra no servidor — a própria tela do sino mostra como está o seu aparelho.`,
   },
   { target: '#tourBtn', title: 'Reabrir este tour quando quiser',
-    body: `Se quiser rever qualquer parte desse tour depois, é só clicar neste ícone, no canto superior direito da tela.` },
+    body: `Se quiser rever qualquer parte, é só clicar neste ícone de interrogação, no canto superior direito da tela.` },
   { target: '#shortcutsBtn', title: 'Atalhos de teclado',
-    body: `Mostra os atalhos disponíveis no app.`,
-    example: `A tecla <b>N</b> abre direto o formulário de nova transação, de qualquer tela — não precisa nem clicar em nada.` },
+    body: `Mostra os atalhos do app: <b>N</b> para nova transação, <b>Q</b> para lançar por frase, <b>L</b> para nova nota, <b>Esc</b> para fechar a janela aberta e <b>?</b> para ver esta lista.`,
+    example: `A tecla <b>N</b> abre o formulário de nova transação de qualquer tela, sem precisar clicar em nada.` },
   { target: '#readOnlyToggle', title: 'Modo leitura (apresentação)',
-    body: `Ativa um modo em que nada pode ser criado, editado ou apagado — todos os botões de ação ficam bloqueados.`,
-    example: `Ótimo pra <b>mostrar o app pra alguém</b> (numa reunião, print ou tela compartilhada) sem risco de mexer sem querer nos seus dados de verdade.` },
+    body: `Ativa um modo em que nada pode ser criado, editado ou apagado — os botões de ação ficam bloqueados.`,
+    example: `Ótimo para <b>mostrar o app para alguém</b> (numa reunião ou tela compartilhada) sem risco de mexer sem querer nos seus dados.` },
   { target: '#themeToggle', title: 'Tema claro/escuro',
-    body: `Alterna entre o visual escuro (padrão) e um tema claro, do jeito que for mais confortável pra você.` },
+    body: `Alterna entre o visual escuro (padrão) e um tema claro, do jeito que for mais confortável para você.` },
+  { target: '#logoutBtn', title: 'Sair da conta',
+    missingNote: `o botão <b>Sair</b> fica no rodapé do menu e aparece quando você está com a conta conectada.`,
+    body: `Encerra a sua sessão neste aparelho. Seus dados ficam guardados na sua conta e voltam quando você entrar de novo. Em computador ou celular de outra pessoa, saia sempre que terminar de usar.` },
   { title: 'Pronto! 🎉',
-    body: `Isso cobre as principais funções do Norte. Sempre que quiser rever alguma parte, é só clicar no ícone de <b>interrogação (?)</b> no topo da tela. Bom uso!` },
+    body: `Esse foi o Norte por dentro. Para começar: <b>crie suas contas</b> com o saldo de hoje, <b>lance suas primeiras transações</b> e volte aqui no Dashboard para ver tudo se organizar. Dica: no celular, abra o menu do navegador e escolha <b>"Instalar app"</b> ou <b>"Adicionar à tela inicial"</b> para ter o Norte como um aplicativo. Sempre que quiser rever alguma parte, clique no <b>(?)</b> no topo da tela. Bom uso!` },
 ];
 function tourEnsureVisible(el){
   if (!el) return;
-  if (el.closest('.sidebar') && window.innerWidth <= 880) $('sidebar').classList.add('open');
   el.scrollIntoView({ block: 'center', behavior: 'auto' });
 }
+// Acha o alvo do passo (um seletor ou uma lista de seletores) e só o aceita se ele
+// estiver realmente visível na tela — senão o passo aparece centralizado, sem destaque.
+function tourFindTarget(step){
+  if (!step || !step.target) return null;
+  const list = Array.isArray(step.target) ? step.target : [step.target];
+  for (const sel of list){
+    let el = null;
+    try { el = document.querySelector(sel); } catch (e){ el = null; }
+    if (!el) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4) continue;
+    if (getComputedStyle(el).visibility === 'hidden') continue;
+    return el;
+  }
+  return null;
+}
+const tourWait = (ms) => new Promise(r => setTimeout(r, ms));
 async function tourGoToStep(i){
   const step = TOUR_STEPS[i];
   tourState.index = i;
+  tourState.token = (tourState.token || 0) + 1;
+  const token = tourState.token;
   if (step.view) switchView(step.view);
-  await new Promise(r => setTimeout(r, 60));
-  let el = step.target ? document.querySelector(step.target) : null;
-  if (el && el.offsetParent === null) el = null; // existe mas está numa view/aba escondida
+  await tourWait(80);
+  if (!tourState.active || token !== tourState.token) return;
+  let el = tourFindTarget(step);
+  // no celular o menu lateral é uma gaveta: abre só quando o alvo está nele e fecha nos outros passos
+  if (window.innerWidth <= 880){
+    const sb = $('sidebar'), isOpen = sb.classList.contains('open');
+    const inSidebar = !!(el && el.closest('.sidebar'));
+    if (inSidebar && !isOpen){ sb.classList.add('open'); await tourWait(340); }
+    else if (!inSidebar && isOpen){ sb.classList.remove('open'); $('sidebarScrim').classList.remove('show'); await tourWait(340); }
+    if (!tourState.active || token !== tourState.token) return;
+    el = tourFindTarget(step);
+  }
   tourEnsureVisible(el);
   renderTourStep(step, el, i);
+  // remede logo depois: gráficos e listas podem ter mudado a altura da página
+  setTimeout(() => {
+    if (tourState.active && tourState.index === i && token === tourState.token) renderTourStep(step, tourFindTarget(step), i);
+  }, 420);
 }
 function renderTourStep(step, el, i){
   const card = $('tourCard');
   const ring = $('tourRing');
   const parts = { top: $('tourOverlayTop'), bottom: $('tourOverlayBottom'), left: $('tourOverlayLeft'), right: $('tourOverlayRight') };
   $('tourStepLabel').textContent = `Passo ${i+1} de ${TOUR_STEPS.length}`;
-  $('tourDots').innerHTML = TOUR_STEPS.map((_,idx) => `<span class="${idx===i?'on':''}"></span>`).join('');
+  $('tourDots').innerHTML = `<i style="width:${Math.round(((i+1) / TOUR_STEPS.length) * 100)}%"></i>`;
   $('tourCardTitle').textContent = step.title;
-  $('tourCardBody').innerHTML = escapeHtmlKeepBold(step.body) + (step.example ? `<div class="example">${escapeHtmlKeepBold(step.example)}</div>` : '');
+  $('tourCardBody').innerHTML = escapeHtmlKeepBold(step.body) + (step.example ? `<div class="example">${escapeHtmlKeepBold(step.example)}</div>` : '')
+    + ((step.target && !el) ? '<div class="example"><b>Obs.:</b> ' + (step.missingNote ? escapeHtmlKeepBold(step.missingNote) : 'este item ainda não aparece na sua tela — ele surge sozinho quando você começar a usar o app (por exemplo, depois de criar a sua primeira conta).') + '</div>' : '');
   $('tourPrevBtn').style.visibility = i === 0 ? 'hidden' : 'visible';
   $('tourNextBtn').textContent = i === TOUR_STEPS.length - 1 ? 'Concluir' : 'Próximo';
   card.style.display = 'block';
@@ -10407,7 +10537,16 @@ function renderTourStep(step, el, i){
     card.classList.add('center');
     card.style.top = ''; card.style.left = '';
   }
+  tourUpdateScrollHint();
 }
+// Quando o texto é maior que o espaço, o fim do card some em degradê (dica de que dá para rolar)
+function tourUpdateScrollHint(){
+  const b = $('tourCardBody'); if (!b) return;
+  b.scrollTop = 0;
+  const sc = b.scrollHeight > b.clientHeight + 2;
+  b.classList.toggle('scrolls', sc); b.classList.toggle('at-end', !sc);
+}
+$('tourCardBody').addEventListener('scroll', () => { const b = $('tourCardBody'); b.classList.toggle('at-end', b.scrollTop + b.clientHeight >= b.scrollHeight - 2); });
 // Escolhe onde colocar o card sem NUNCA sobrepor o elemento destacado (r):
 // tenta embaixo, depois em cima, e só em último caso ao lado — sempre
 // conferindo se realmente cabe antes de aceitar cada posição.
@@ -10446,15 +10585,18 @@ function startTour(){
 }
 function endTour(){
   tourState.active = false;
+  tourState.token = (tourState.token || 0) + 1;
   ['tourOverlayTop','tourOverlayBottom','tourOverlayLeft','tourOverlayRight','tourRing','tourCard'].forEach(id => $(id).style.display = 'none');
-  $('sidebar').classList.remove('open');
+  $('sidebar').classList.remove('open'); $('sidebarScrim').classList.remove('show');
   localStorage.setItem(TOUR_SEEN_KEY, '1');
 }
 function offerTourModal(){
   if (tourState.active || $('modalBackdrop').classList.contains('show')) return;
   const html = `<div class="modal-head"><h3>Quer conhecer o Norte?</h3><button class="btn btn-icon btn-ghost" data-action="close" aria-label="Fechar">✕</button></div>
     <div class="modal-body">
-      <p style="color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0;">Preparei um tour guiado rápido (uns 2 minutos) mostrando onde fica cada função do app — cartões, orçamentos, metas, saúde financeira e mais. Você pode rever isso quando quiser pelo ícone de <b>interrogação (?)</b> no topo da tela.</p>
+      <p style="color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0 0 10px;">Preparei um tour guiado de uns 3 minutos mostrando, tela por tela, para que serve cada função do Norte — contas, lançamentos, cartões, orçamentos, metas e mais.</p>
+      <p style="color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0 0 10px;"><b>Antes de começar:</b> o Norte <b>não se conecta ao seu banco</b>. Você cria no app uma conta para cada banco ou carteira que usa de verdade, informa o saldo de hoje e vai lançando suas receitas e despesas.</p>
+      <p style="color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0;">Dá para rever o tour quando quiser pelo ícone de <b>interrogação (?)</b> no topo da tela.</p>
     </div>
     <div class="modal-foot"><button class="btn btn-ghost" data-action="skip">Agora não</button><button class="btn btn-primary" data-action="start">Começar tour</button></div>`;
   openModal(html);
@@ -10468,7 +10610,7 @@ $('tourBtn').addEventListener('click', startTour);
 $('tourNextBtn').addEventListener('click', () => { if (tourState.index >= TOUR_STEPS.length - 1) endTour(); else tourGoToStep(tourState.index + 1); });
 $('tourPrevBtn').addEventListener('click', () => { if (tourState.index > 0) tourGoToStep(tourState.index - 1); });
 $('tourSkipBtn').addEventListener('click', endTour);
-window.addEventListener('resize', () => { if (tourState.active) renderTourStep(TOUR_STEPS[tourState.index], (TOUR_STEPS[tourState.index].target ? document.querySelector(TOUR_STEPS[tourState.index].target) : null), tourState.index); });
+window.addEventListener('resize', () => { if (tourState.active) renderTourStep(TOUR_STEPS[tourState.index], tourFindTarget(TOUR_STEPS[tourState.index]), tourState.index); });
 document.addEventListener('keydown', (e) => {
   if (!tourState.active) return;
   if (e.key === 'Escape'){ e.preventDefault(); endTour(); }
