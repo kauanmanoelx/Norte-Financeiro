@@ -761,6 +761,22 @@ tr:hover td{background:var(--surface-2);}
 .calc-accent{background:var(--accent-soft); color:var(--accent); border-color:var(--accent-soft); font-size:26px;}
 .calc-accent.calc-active{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
 .calc-eq{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); box-shadow:var(--glow-accent); font-size:26px;}
+.calc-balance{margin:-4px 0 16px; padding:12px 12px 10px; border:1px solid var(--border-soft); border-radius:16px; background:var(--surface);}
+.calc-balance-sub{font-size:11.5px; color:var(--text-faint); margin:2px 4px 8px; line-height:1.4;}
+.calc-balance-accs{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+.calc-balance-accs:empty{display:none;}
+.calc-balance-accs .calc-bal-btn{flex:1 1 120px; padding:7px 11px;}
+.calc-balance-accs .calc-bal-btn .val{font-size:13.5px;}
+.calc-balance-accs .calc-bal-btn .lbl{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;}
+.calc-balance-head{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.calc-balance-head .calc-balance-label{margin-bottom:0;}
+.calc-balance-label{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text-faint); margin:0 4px 7px;}
+.calc-balance-btns{display:flex; gap:8px; flex-wrap:wrap;}
+.calc-bal-btn{flex:1 1 140px; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:9px 13px; border-radius:14px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); cursor:pointer; font-family:inherit; text-align:left; transition:border-color .15s var(--ease), background .15s var(--ease);}
+.calc-bal-btn:hover{border-color:var(--accent); background:var(--accent-soft);}
+.calc-bal-btn .lbl{font-size:11.5px; color:var(--text-dim);}
+.calc-bal-btn .val{font-size:15px; font-weight:600; font-variant-numeric:tabular-nums;}
+.calc-bal-btn .val.neg{color:var(--negative);}
 .calc-hint{margin:14px 6px 0; font-size:12px; line-height:1.7; color:var(--text-faint); text-align:center;}
 .calc-hint kbd{font-family:var(--font-mono); font-size:11px; padding:1px 6px; border-radius:5px; border:1px solid var(--border); background:var(--surface-2); color:var(--text-dim);}
 @media(hover:none){ .calc-hint{display:none;} }
@@ -1485,6 +1501,15 @@ body.readonly-mode #fCatNewBtn, body.readonly-mode #fCatNewAddBtn
               <div class="calc-screen">
                 <div class="calc-expr" id="calcExpr">&nbsp;</div>
                 <div class="calc-display" id="calcDisplay">0</div>
+              </div>
+              <div class="calc-balance hidden" id="calcBalance">
+                <div class="calc-balance-head"><div class="calc-balance-label">Seu saldo</div><button type="button" class="hero-eye" id="calcEye" aria-pressed="false" aria-label="Ocultar saldos" title="Ocultar saldos"></button></div>
+                <div class="calc-balance-sub">Toque num valor para colocá-lo no visor e fazer a sua conta.</div>
+                <div class="calc-balance-btns">
+                  <button type="button" class="calc-bal-btn" id="calcUseAvail" data-bal="avail" title="Coloca o saldo disponível no visor"><span class="lbl">Saldo disponível</span><span class="val" id="calcAvailVal">R$ 0,00</span></button>
+                  <button type="button" class="calc-bal-btn hidden" id="calcUseTotal" data-bal="total" title="Coloca o saldo total (com cofrinhos) no visor"><span class="lbl">Saldo total (com cofrinhos)</span><span class="val" id="calcTotalVal">R$ 0,00</span></button>
+                </div>
+                <div class="calc-balance-accs" id="calcBalanceAccs"></div>
               </div>
               <div class="calc-grid">
                 <button class="calc-btn calc-fn danger" data-key="clear" aria-label="Limpar tudo" title="Limpar tudo (Esc)">C</button>
@@ -5697,11 +5722,44 @@ function renderHealth(){
 /* -------------------- CALCULADORA & SIMULAÇÕES -------------------- */
 let calculatorInitialized = false;
 function initCalculatorView(){
-  if (calculatorInitialized) return;
-  calculatorInitialized = true;
-  wireCalcTabs();
-  wireBasicCalculator();
-  wireSimulator();
+  if (!calculatorInitialized){
+    calculatorInitialized = true;
+    wireCalcTabs();
+    wireBasicCalculator();
+    wireSimulator();
+  }
+  renderCalcBalance();
+}
+// Saldos que a calculadora pode usar como número da conta (sempre os valores de agora)
+function calcBalanceValue(kind){
+  if (kind === 'total') return totalBalance();
+  return state.accounts.reduce((sum, a) => sum + accountAvailableBalance(a.id), 0);
+}
+function renderCalcBalance(){
+  const box = $('calcBalance'); if (!box) return;
+  const hasAccounts = !!(state && state.accounts && state.accounts.length);
+  box.classList.toggle('hidden', !hasAccounts);
+  if (!hasAccounts) return;
+  const hidden = (typeof heroHide !== 'undefined') && heroHide;
+  const eye = $('calcEye');
+  if (eye){
+    eye.innerHTML = hidden ? HERO_EYE_OFF : HERO_EYE_ON;
+    eye.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+    const t = hidden ? 'Mostrar saldos' : 'Ocultar saldos';
+    eye.setAttribute('aria-label', t); eye.title = t;
+  }
+  [['avail', 'calcAvailVal'], ['total', 'calcTotalVal']].forEach(([kind, id]) => {
+    const el = $(id), v = calcBalanceValue(kind);
+    el.textContent = hidden ? 'R$ ••••' : fmtBRL(v);
+    el.classList.toggle('neg', !hidden && v < 0);
+  });
+  $('calcUseTotal').classList.toggle('hidden', !projectionHasCofrinhos());
+  // com mais de uma conta, mostra também o saldo de cada uma (para somar só o que interessa)
+  const accsEl = $('calcBalanceAccs');
+  accsEl.innerHTML = state.accounts.length > 1 ? state.accounts.map(a => {
+    const v = accountAvailableBalance(a.id);
+    return `<button type="button" class="calc-bal-btn" data-acc="${escapeHtml(String(a.id))}" title="Coloca o saldo desta conta no visor"><span class="lbl">${escapeHtml(a.name)}</span><span class="val ${!hidden && v < 0 ? 'neg' : ''}">${hidden ? 'R$ ••••' : fmtBRL(v)}</span></button>`;
+  }).join('') : '';
 }
 function wireCalcTabs(){
   $('calcTabToggle').querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
@@ -5720,6 +5778,7 @@ function wireBasicCalculator(){
   let pendingOp = null;
   let justEvaluated = false;
   let lastExpr = '';
+  let freshNumber = false; // logo depois de usar o saldo: o próximo dígito começa um número novo
   const OP_SYM = { '+': '+', '-': '−', '*': '×', '/': '÷' };
   const MAX_DIGITS = 15;
   const fmtRaw = (n) => {
@@ -5754,6 +5813,7 @@ function wireBasicCalculator(){
   };
   const resetAll = () => { display = '0'; stored = null; pendingOp = null; justEvaluated = false; lastExpr = ''; };
   const press = (key) => {
+    const wasFresh = freshNumber; freshNumber = false;
     if (display === 'Erro' && key !== 'clear') resetAll();
     if (key === 'clear'){ resetAll(); }
     else if (key === 'back'){
@@ -5772,7 +5832,7 @@ function wireBasicCalculator(){
       else display = fmtRaw(cur / 100);
     }
     else if (key === '.'){
-      if (justEvaluated){ display = '0,'; justEvaluated = false; lastExpr = ''; }
+      if (justEvaluated || wasFresh){ display = '0,'; justEvaluated = false; lastExpr = ''; }
       else if (!display.includes(',')) display += ',';
     }
     else if (['+','-','*','/'].includes(key)){
@@ -5792,7 +5852,7 @@ function wireBasicCalculator(){
       justEvaluated = true;
     }
     else { // dígito
-      if (display === '0' || justEvaluated){
+      if (display === '0' || justEvaluated || wasFresh){
         display = key; justEvaluated = false; lastExpr = '';
       } else if (display.replace(/[-,]/g, '').length < MAX_DIGITS){
         display += key;
@@ -5801,6 +5861,23 @@ function wireBasicCalculator(){
     render();
   };
   $('calcTabBasic').querySelectorAll('.calc-btn').forEach(btn => btn.addEventListener('click', () => press(btn.dataset.key)));
+  // Botões de saldo: colocam o saldo atual no visor como se você o tivesse digitado
+  // (serve de primeiro número da conta ou de qualquer número no meio dela).
+  $('calcBalance').addEventListener('click', (e) => {
+    if (e.target.closest('#calcEye')){
+      heroHide = !heroHide;   // é o mesmo olhinho do Dashboard: vale para o app todo
+      try { localStorage.setItem('norte_hide_balance', heroHide ? '1' : '0'); } catch (err){}
+      renderCalcBalance();
+      try { renderHeroBalance(); } catch (err){}
+      return;
+    }
+    const btn = e.target.closest('[data-bal], [data-acc]'); if (!btn) return;
+    if (heroHide){ showToast('Saldo oculto. Toque no olhinho para mostrar e usar na conta.'); return; }  // não revela o valor no visor
+    const raw = btn.dataset.acc ? accountAvailableBalance(btn.dataset.acc) : calcBalanceValue(btn.dataset.bal);
+    const v = Math.round(raw * 100) / 100;
+    display = fmtRaw(v); justEvaluated = false; lastExpr = ''; freshNumber = true;
+    render();
+  });
 
   // Teclado do computador: só age quando a calculadora está à vista e a
   // pessoa não está digitando em outro campo nem com um modal aberto.
@@ -10380,8 +10457,8 @@ const TOUR_STEPS = [
   },
   {
     view: 'calculator', target: '[data-nav="calculator"]', title: 'Calculadora & Simulações',
-    body: `Duas ferramentas: uma <b>calculadora</b> comum (funciona também com o teclado do computador) e o simulador <b>Juros & Investimentos</b>, com juros compostos ou simples. Nele você escolhe o que quer descobrir: o <b>valor final</b>, o <b>aporte mensal necessário</b> ou o <b>tempo necessário</b>, e vê um gráfico e uma tabela mês a mês. É uma simulação educativa, não uma recomendação de investimento.`,
-    example: `Descubra quanto tempo leva para juntar R$ 20.000 guardando R$ 500 por mês a uma taxa que você escolher — útil para planejar uma meta antes de criá-la.`,
+    body: `Duas ferramentas: uma <b>calculadora</b> comum (funciona também com o teclado do computador) — com botões de <b>saldo</b> que colocam o seu saldo atual no visor, para usar como primeiro número da conta — e o simulador <b>Juros & Investimentos</b>, com juros compostos ou simples. Nele você escolhe o que quer descobrir: o <b>valor final</b>, o <b>aporte mensal necessário</b> ou o <b>tempo necessário</b>, e vê um gráfico e uma tabela mês a mês. É uma simulação educativa, não uma recomendação de investimento.`,
+    example: `Na calculadora, o card <b>"Seu saldo"</b> mostra o seu saldo disponível (e o de cada conta, se você tiver mais de uma). Toque num valor para colocá-lo no visor e some, subtraia ou divida do jeito que precisar. O <b>olhinho</b> do card esconde os valores — o mesmo olhinho do Dashboard.`,
   },
   {
     view: 'aichat', target: '[data-nav="aichat"]', title: 'Chat com IA',
