@@ -1311,6 +1311,7 @@ body.readonly-mode #fCatNewBtn, body.readonly-mode #fCatNewAddBtn
     </button>
     <div class="auth-divider"><span>ou</span></div>
     <form id="authForm">
+      <div class="field" id="authNameField" style="display:none;"><label>Como podemos te chamar?</label><input type="text" id="authName" autocomplete="given-name" maxlength="30" placeholder="Seu primeiro nome"></div>
       <div class="field"><label>E-mail</label><input type="email" id="authEmail" required autocomplete="email"></div>
       <div class="field"><label>Senha</label><div class="pw-wrap"><input type="password" id="authPassword" required autocomplete="current-password" minlength="6"><button type="button" class="pw-eye" id="authPwEye" aria-label="Mostrar senha" title="Mostrar senha"><svg class="icon" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <div class="auth-forgot" id="authForgotWrap"><button type="button" id="authForgotBtn">Esqueci minha senha</button></div>
@@ -1616,7 +1617,11 @@ body.readonly-mode #fCatNewBtn, body.readonly-mode #fCatNewAddBtn
         <div id="aiChatMain" class="hidden">
           <div class="card" style="margin-bottom:14px; display:flex; align-items:center; gap:10px; justify-content:space-between; flex-wrap:wrap; width:100%; box-sizing:border-box;">
             <p style="color:var(--text-faint); font-size:11.5px; margin:0; max-width:520px;">Ao conversar, um resumo dos seus números (não os lançamentos individuais) é enviado para gerar a resposta. Isto é orientação educativa, não é consultoria financeira profissional.</p>
-            <button class="btn btn-ghost btn-sm" id="clearChatBtn">Limpar conversa</button>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:14px;">
+            <select id="chatPicker" aria-label="Conversas anteriores" style="flex:1; min-width:180px; max-width:380px;"></select>
+            <button class="btn btn-sm" id="newChatBtn">+ Nova conversa</button>
+            <button class="btn btn-ghost btn-sm" id="clearChatBtn">Apagar esta conversa</button>
           </div>
           <div class="card" style="padding:0; display:flex; flex-direction:column; height:60vh; min-height:420px;">
             <div id="chatMessages" style="flex:1; overflow-y:auto; padding:20px;"></div>
@@ -1903,6 +1908,7 @@ body.readonly-mode #fCatNewBtn, body.readonly-mode #fCatNewAddBtn
           <div style="flex:1; min-width:180px;">
             <div style="font-family:var(--font-display); font-size:20px; font-weight:400;">Minha conta</div>
             <div style="color:var(--text-dim); font-size:13px; margin-top:4px;" id="accountEmailLine">—</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:10px;"><label for="accountNameInput" style="font-size:12.5px; color:var(--text-dim);">Seu nome</label><input type="text" id="accountNameInput" maxlength="30" placeholder="Como o bichinho te chama" style="max-width:200px; padding:6px 10px; font-size:13px;"></div>
           </div>
           <button class="btn btn-sm" id="removeAvatarBtn">Remover foto</button>
           <button class="btn btn-sm" id="changePasswordBtn"><svg class="icon" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> Redefinir senha</button>
@@ -1910,23 +1916,24 @@ body.readonly-mode #fCatNewBtn, body.readonly-mode #fCatNewAddBtn
 
         <div class="card" style="margin-bottom:16px;">
           <h4 style="margin-bottom:6px;">Backup dos dados</h4>
-          <p style="color:var(--text-dim); font-size:13px; margin:0 0 14px;">Exporte todos os seus dados em um arquivo .json ou restaure a partir de um backup anterior.</p>
+          <p style="color:var(--text-dim); font-size:13px; margin:0 0 6px;">Seus dados já ficam salvos na nuvem. O backup é uma <b>cópia extra</b> no seu aparelho, para guardar com você ou restaurar se algo der errado.</p>
+          <p style="font-size:12.5px; margin:0 0 14px;" id="backupInfo"></p>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn" id="exportJsonBtn">
+            <button class="btn btn-primary" id="exportJsonBtn">
               <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Baixar backup (.json)
+              Fazer backup agora
             </button>
             <button class="btn" id="importJsonBtn">
               <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Importar backup
+              Restaurar de um backup
             </button>
             <button class="btn" id="exportExcelBtn">
               <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
               Exportar planilha (Excel)
             </button>
-            <input type="file" id="importFileInput" accept="application/json" class="hidden">
+            <input type="file" id="importFileInput" accept=".json,application/json" class="hidden">
           </div>
-          <p style="font-size:12px; color:var(--text-faint); margin:10px 0 0;">A planilha Excel é só para consulta/análise — para restaurar seus dados no app, use sempre o backup em .json.</p>
+          <p style="font-size:12px; color:var(--text-faint); margin:10px 0 0;">O backup (.json) leva <b>todos os seus perfis</b> e é o único que dá para restaurar no app. A planilha Excel é para consultar e analisar os números fora do Norte.</p>
         </div>
 
 
@@ -2694,6 +2701,8 @@ function defaultState(){
     privateVault: null,
     achievements: [],
     aiChatMessages: [],
+    aiChats: [],
+    aiChatActive: null,
     pet: null,
   };
 }
@@ -2974,6 +2983,8 @@ function setAuthMode(mode){
   $('authToggleBtn').textContent = mode === 'login' ? 'Criar conta' : 'Entrar';
   $('authPassword').setAttribute('autocomplete', mode === 'login' ? 'current-password' : 'new-password');
   $('authForgotWrap').style.display = mode === 'login' ? '' : 'none';
+  $('authNameField').style.display = mode === 'login' ? 'none' : '';
+  $('authName').required = mode !== 'login';
   $('authError').style.display = 'none';
 }
 function authMsg(text, ok){
@@ -3077,7 +3088,8 @@ $('authForm').addEventListener('submit', async (e) => {
       if (error) throw error;
       await onAuthenticated(data.user);
     } else {
-      const { data, error } = await supa.auth.signUp({ email, password });
+      const _nm = $('authName').value.trim().slice(0, 30);
+      const { data, error } = await supa.auth.signUp({ email, password, options: { data: { full_name: _nm } } });
       if (error) throw error;
       if (data.user && !data.session){
         errBox.style.display = 'block'; errBox.style.background = 'var(--positive-soft)'; errBox.style.color = 'var(--positive)';
@@ -3110,6 +3122,7 @@ async function _onAuthenticated(user){
   currentUser = user; petRT.greeted = false;
   appData = await loadFromSupabase();
   const eventsOnBoot = ensureAppIntegrity();
+  try { const um = user.user_metadata || {}, prov = (user.app_metadata && user.app_metadata.provider) || 'email'; if (!appData.userName && prov === 'email' && um.full_name){ appData.userName = String(um.full_name).trim().slice(0, 30); scheduleSave(); } } catch(e){}
   $('authScreen').style.display = 'none';
   $('appShell').classList.add('show');
   $('logoutBtn').style.display = 'inline-flex';
@@ -3189,6 +3202,7 @@ function ensureIntegrity(){
   state.achievements = state.achievements || [];
   if (state.pet === undefined) state.pet = null;
   state.aiChatMessages = state.aiChatMessages || [];
+  state.aiChats = state.aiChats || [];
   state.notes.forEach(n => {
     if (!Array.isArray(n.checklist)) n.checklist = [];
     if (n.pinned === undefined) n.pinned = false;
@@ -5230,8 +5244,8 @@ document.addEventListener('pointermove', petPointer, { passive: true });
 document.addEventListener('pointerdown', petPointer, { passive: true });
 /* ---- Saudação ao abrir o app: o bichinho fala com a pessoa num balãozinho ---- */
 function petFirstName(){
-  let n = '';
-  try { const m = (currentUser && currentUser.user_metadata) || {}; n = m.given_name || m.full_name || m.name || ''; } catch (e) {}
+  let n = (appData && appData.userName) || '';
+  if (!n) try { const m = (currentUser && currentUser.user_metadata) || {}; n = m.given_name || m.full_name || m.name || ''; } catch (e) {}
   if (!n && appData && appData.profiles){ const main = appData.profiles.find(x => x.isMain) || appData.profiles[0]; if (main && main.name && main.name !== 'Pessoal') n = main.name; }
   n = String(n || '').trim().split(/\s+/)[0] || '';
   if (!n || /[@\d]/.test(n)) return '';
@@ -6230,7 +6244,7 @@ function runSimulation(){
 
 /* -------------------- CHAT COM IA --------------------
    Chama uma Supabase Edge Function ("financial-coach"), que guarda a chave
-   da Anthropic em segredo no servidor e conversa com a Claude. Sem o
+   da IA (Gemini, do Google) em segredo no servidor e conversa com ela. Sem o
    Supabase configurado (SUPA_ON=false) essa tela mostra uma explicação em
    vez do chat, já que não existe como fazer essa chamada com segurança
    direto do navegador. */
@@ -6275,13 +6289,38 @@ function formatChatText(text){
   safe = safe.replace(/(^|[^*])\*(?!\*)(.+?)\*(?!\*)/g, '$1<em>$2</em>'); // *itálico*
   return safe;
 }
+/* ---- Histórico: várias conversas guardadas (sincronizadas com a conta) ---- */
+const CHAT_MAX_CHATS = 30, CHAT_MAX_MSGS = 200;
+function ensureChats(){
+  if (!Array.isArray(state.aiChats)) state.aiChats = [];
+  if (state.aiChats.length === 0 && Array.isArray(state.aiChatMessages) && state.aiChatMessages.length){
+    const first = state.aiChatMessages.find(m => m.role === 'user');
+    state.aiChats.push({ id: uid(), title: chatTitleFrom(first ? first.content : 'Conversa anterior'), createdAt: Date.now(), updatedAt: Date.now(), messages: state.aiChatMessages });
+    state.aiChatActive = state.aiChats[0].id;
+  }
+  state.aiChatMessages = [];
+  if (state.aiChatActive && !state.aiChats.some(c => c.id === state.aiChatActive)) state.aiChatActive = null;
+}
+function chatTitleFrom(t){ t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > 42 ? t.slice(0, 40) + '…' : (t || 'Nova conversa'); }
+function activeChat(){ ensureChats(); return state.aiChats.find(c => c.id === state.aiChatActive) || null; }
+function chatMsgs(){ const c = activeChat(); return c ? c.messages : []; }
+function refreshChatPicker(){
+  ensureChats();
+  const sel = $('chatPicker'); if (!sel) return;
+  const list = [...state.aiChats].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  const fmt = (t) => { try { return new Date(t).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }); } catch (e) { return ''; } };
+  sel.innerHTML = `<option value="">Nova conversa</option>` + list.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.title)} · ${fmt(c.updatedAt)}</option>`).join('');
+  sel.value = state.aiChatActive || '';
+  $('clearChatBtn').style.display = state.aiChatActive ? '' : 'none';
+}
 function renderChatMessages(){
   const wrap = $('chatMessages');
-  if (!state.aiChatMessages.length){
+  refreshChatPicker();
+  if (!chatMsgs().length){
     wrap.innerHTML = `<div class="empty-state" style="padding:30px 10px;">${ICONS.aichat}<p>Pergunte algo como "como está minha saúde financeira esse mês?" ou "o que posso cortar pra guardar mais dinheiro?".</p></div>`;
     return;
   }
-  wrap.innerHTML = state.aiChatMessages.map(m => `<div class="chat-msg ${m.role}"><div class="chat-bubble">${formatChatText(m.content)}</div></div>`).join('');
+  wrap.innerHTML = chatMsgs().map(m => `<div class="chat-msg ${m.role}"><div class="chat-bubble">${formatChatText(m.content)}</div></div>`).join('');
   wrap.scrollTop = wrap.scrollHeight;
 }
 function showChatTyping(){
@@ -6295,7 +6334,15 @@ async function sendChatMessage(){
   const text = input.value.trim();
   if (!text) return;
   input.value = '';
-  state.aiChatMessages.push({ role: 'user', content: text });
+  let chat = activeChat();
+  if (!chat){
+    chat = { id: uid(), title: chatTitleFrom(text), createdAt: Date.now(), updatedAt: Date.now(), messages: [] };
+    state.aiChats.unshift(chat); state.aiChatActive = chat.id;
+    if (state.aiChats.length > CHAT_MAX_CHATS) state.aiChats.length = CHAT_MAX_CHATS;
+  }
+  const msgs = chat.messages;
+  msgs.push({ role: 'user', content: text });
+  chat.updatedAt = Date.now();
   persistLocalCache();
   renderChatMessages();
   showChatTyping();
@@ -6304,28 +6351,32 @@ async function sendChatMessage(){
     const { data, error } = await supa.functions.invoke('financial-coach', {
       body: {
         context: buildFinancialContext(),
-        messages: state.aiChatMessages.slice(-16).map(m => ({ role: m.role, content: m.content })),
+        messages: msgs.filter(m => m.role !== 'error').slice(-16).map(m => ({ role: m.role, content: m.content })),
       }
     });
     $('chatTypingRow')?.remove();
     if (error) throw error;
     const reply = data?.reply || 'Não consegui gerar uma resposta agora.';
-    state.aiChatMessages.push({ role: 'assistant', content: reply });
+    msgs.push({ role: 'assistant', content: reply });
   } catch(err){
     $('chatTypingRow')?.remove();
-    state.aiChatMessages.push({ role: 'error', content: 'Não foi possível falar com o assistente. Verifique se a Edge Function "financial-coach" está implantada no Supabase e tente de novo.' });
+    msgs.push({ role: 'error', content: 'Não foi possível falar com o assistente. Verifique se a Edge Function "financial-coach" está implantada no Supabase e tente de novo.' });
   }
-  persistLocalCache();
+  chat.updatedAt = Date.now();
+  if (msgs.length > CHAT_MAX_MSGS) msgs.splice(0, msgs.length - CHAT_MAX_MSGS);
+  mutate();
   renderChatMessages();
   $('chatSendBtn').disabled = false;
 }
 $('chatSendBtn').addEventListener('click', sendChatMessage);
 $('chatInput').addEventListener('keydown', (e) => { if (e.key === 'Enter'){ e.preventDefault(); sendChatMessage(); } });
+$('chatPicker').addEventListener('change', (e) => { ensureChats(); state.aiChatActive = e.target.value || null; mutate(); renderChatMessages(); });
+$('newChatBtn').addEventListener('click', () => { ensureChats(); state.aiChatActive = null; mutate(); renderChatMessages(); $('chatInput').focus(); });
 $('clearChatBtn').addEventListener('click', async () => {
-  if (!state.aiChatMessages.length) return;
-  const ok = await confirmModal('Limpar conversa', 'Apagar todo o histórico dessa conversa?', { danger: true, confirmLabel: 'Limpar' });
+  const c = activeChat(); if (!c) return;
+  const ok = await confirmModal('Apagar conversa', 'Apagar a conversa "' + c.title + '"? Isso não dá para desfazer.', { danger: true, confirmLabel: 'Apagar' });
   if (!ok) return;
-  state.aiChatMessages = [];
+  state.aiChats = state.aiChats.filter(x => x.id !== c.id); state.aiChatActive = null;
   mutate(); renderChatMessages();
 });
 
@@ -7743,7 +7794,7 @@ const NOTIF_PREFS_KEY = 'norte_notif_prefs_v1';
 const NOTIF_LOG_KEY = 'norte_notif_log_v1';
 const NOTIF_SENT_LS_KEY = 'norte_notif_sent_v1';
 const NOTIF_DEFAULTS = { twoDays: true, dayBefore: true, dayOf: true, newTx: true, hour: 9 };
-const VAPID_PUBLIC_KEY = 'BHD480a4vFfTnYY7RMB6iUP6-xX5EDcJRaqI67i_iHtynj-rQ3_822troFGNpABibUnQdzGDsiiHqbb10sFZLOA'; // chave PÚBLICA do push (a privada fica só nos "Secrets" do Supabase)
+const VAPID_PUBLIC_KEY = 'BCpuDSmg6N7kTgqS_Qv4O-wicf1x4l2tNHhy-MRsQ7NTuBbtHiQ1vzTUqIrT6WW0VyDLbH4vOZixyLrqepChUcc'; // chave PÚBLICA do push (a privada fica só nos "Secrets" do Supabase)
 const notifPad = (n) => String(n).padStart(2, '0');
 const notifYmd = (d) => d.getFullYear() + '-' + notifPad(d.getMonth() + 1) + '-' + notifPad(d.getDate());
 function notifAddDays(iso, n){ const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return notifYmd(d); }
@@ -10223,13 +10274,30 @@ $('addCreditCardBtn').addEventListener('click', () => openCreditCardModal());
 $('addCategoryBtn').addEventListener('click', () => openCategoryModal());
 
 /* -------------------- BACKUP -------------------- */
-$('exportJsonBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+const BACKUP_KEY = 'norte_last_backup';
+function backupMark(){ try { localStorage.setItem(BACKUP_KEY, String(Date.now())); } catch (e) {} renderBackupInfo(); }
+function renderBackupInfo(){
+  const el = $('backupInfo'); if (!el) return;
+  let t = 0; try { t = Number(localStorage.getItem(BACKUP_KEY)) || 0; } catch (e) {}
+  if (!t){ el.style.color = 'var(--text-faint)'; el.textContent = 'Você ainda não fez nenhum backup neste aparelho.'; return; }
+  const days = Math.floor((Date.now() - t) / 86400000);
+  el.style.color = days > 30 ? 'var(--warning, var(--negative))' : 'var(--text-faint)';
+  el.textContent = 'Último backup neste aparelho: ' + (days === 0 ? 'hoje' : days === 1 ? 'ontem' : 'há ' + days + ' dias') + '.';
+}
+function backupCounts(st){
+  const n = (k) => Array.isArray(st && st[k]) ? st[k].length : 0;
+  return { tx: n('transactions'), acc: n('accounts'), cat: n('categories'), goals: n('goals') };
+}
+function downloadBlob(blob, name){
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'norte_backup_' + todayISO() + '.json';
-  a.click();
-  showToast('Backup baixado.');
+  a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+$('exportJsonBtn').addEventListener('click', () => {
+  const payload = { norte: 2, exportedAt: new Date().toISOString(), activeProfileId: appData.activeProfileId, userName: appData.userName || null, profiles: appData.profiles };
+  downloadBlob(new Blob([JSON.stringify(payload)], { type: 'application/json' }), 'norte_backup_' + todayISO() + '.json');
+  backupMark();
+  showToast('Backup baixado. Guarde o arquivo em um lugar seguro.', 4200);
 });
 $('importJsonBtn').addEventListener('click', () => $('importFileInput').click());
 
@@ -10294,7 +10362,7 @@ $('exportExcelBtn').addEventListener('click', () => {
   if (typeof XLSX === 'undefined'){ showToast('Não foi possível carregar o gerador de planilhas — verifique sua conexão com a internet.', 5000); return; }
   try {
     const wb = buildExcelWorkbook();
-    XLSX.writeFile(wb, 'norte_backup_' + todayISO() + '.xlsx');
+    XLSX.writeFile(wb, 'norte_planilha_' + todayISO() + '.xlsx');
     showToast('Planilha Excel baixada.');
   } catch(e){
     console.error(e);
@@ -10303,25 +10371,44 @@ $('exportExcelBtn').addEventListener('click', () => {
 });
 $('importFileInput').addEventListener('change', async (e) => {
   const file = e.target.files[0];
-  if (!file) return;
-  const ok = await confirmModal('Importar backup', 'Importar este backup substitui os dados do perfil atual ("' + getActiveProfile().name + '"). Deseja continuar?', { danger: true, confirmLabel: 'Importar' });
-  if (!ok) { e.target.value = ''; return; }
-  const previous = state;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const parsed = JSON.parse(reader.result);
-      // aceita tanto um backup de um único perfil quanto um backup completo (com vários perfis) — neste caso usa o primeiro
-      const imported = (parsed && Array.isArray(parsed.profiles) && parsed.profiles.length) ? parsed.profiles[0].data : parsed;
-      state = imported;
-      getActiveProfile().data = state;
-      ensureIntegrity();
-      mutate(); renderAll();
-      showUndoToast('Backup importado com sucesso.', () => { state = previous; getActiveProfile().data = state; mutate(); renderAll(); });
-    } catch(err){ showToast('Arquivo inválido.'); }
-  };
-  reader.readAsText(file);
   e.target.value = '';
+  if (!file) return;
+  let parsed;
+  try { parsed = JSON.parse(await file.text()); } catch (err){ showToast('Esse arquivo não é um backup válido do Norte.', 4500); return; }
+  // aceita: backup completo (v2, vários perfis), backup antigo com "profiles", ou o estado de um único perfil
+  let profiles = null, single = null;
+  if (parsed && Array.isArray(parsed.profiles) && parsed.profiles.length) profiles = parsed.profiles;
+  else if (parsed && typeof parsed === 'object' && (Array.isArray(parsed.transactions) || Array.isArray(parsed.accounts))) single = parsed;
+  if (!profiles && !single){ showToast('Esse arquivo não parece ser um backup do Norte.', 4500); return; }
+  const when = parsed.exportedAt ? new Date(parsed.exportedAt).toLocaleDateString('pt-BR') : null;
+  let msg, mode;
+  if (profiles){
+    const tot = profiles.reduce((a, p) => { const c = backupCounts(p.data); return { tx: a.tx + c.tx, acc: a.acc + c.acc }; }, { tx: 0, acc: 0 });
+    msg = `Este backup${when ? ' (de ' + when + ')' : ''} tem ${profiles.length} ${profiles.length === 1 ? 'perfil' : 'perfis'}, ${tot.acc} contas e ${tot.tx} transações. Restaurar vai substituir tudo o que existe agora no Norte (todos os perfis). Dá para desfazer logo depois.`;
+    mode = 'all';
+  } else {
+    const c = backupCounts(single);
+    msg = `Este backup tem ${c.acc} contas e ${c.tx} transações. Restaurar vai substituir os dados do perfil atual ("${getActiveProfile().name}"). Dá para desfazer logo depois.`;
+    mode = 'one';
+  }
+  const ok = await confirmModal('Restaurar backup', msg, { danger: true, confirmLabel: 'Restaurar' });
+  if (!ok) return;
+  const prevApp = appData, prevState = state;
+  try {
+    if (mode === 'all'){
+      const keepAvatar = appData.avatarData;
+      appData = normalizeAppData({ activeProfileId: parsed.activeProfileId || profiles[0].id, profiles, userName: parsed.userName || appData.userName, avatarData: parsed.avatarData || keepAvatar });
+      ensureAppIntegrity();
+      state = getActiveProfile().data;
+    } else {
+      state = single; getActiveProfile().data = state; ensureIntegrity();
+    }
+    mutate(); renderProfileSwitcher(); renderAll();
+    showUndoToast('Backup restaurado com sucesso.', () => { appData = prevApp; state = prevState; mutate(); renderProfileSwitcher(); renderAll(); });
+  } catch (err){
+    console.error(err); appData = prevApp; state = prevState;
+    showToast('Não foi possível restaurar esse arquivo.', 4500);
+  }
 });
 $('clearAllBtn').addEventListener('click', async () => {
   const ok1 = await confirmModal('Limpar todos os dados', 'Isso apagará TODOS os dados do perfil atual ("' + getActiveProfile().name + '") permanentemente — contas, transações, orçamentos e metas. Os outros perfis não são afetados. Tem certeza?', { danger: true, confirmLabel: 'Continuar' });
@@ -10346,13 +10433,15 @@ function renderAccountAvatarPreview(){
   }
 }
 function renderAccountView(){
+  try { const ni = $('accountNameInput'); if (ni && document.activeElement !== ni) ni.value = appData.userName || ''; } catch (e) {}
   $('accountEmailLine').textContent = currentUser
     ? currentUser.email
     : 'Modo local — sem login (os dados ficam só neste navegador)';
   $('changePasswordBtn').style.display = currentUser ? '' : 'none';
-  renderAccountAvatarPreview();
+  renderAccountAvatarPreview(); renderBackupInfo();
   $('removeAvatarBtn').style.display = appData.avatarData ? '' : 'none';
 }
+$('accountNameInput').addEventListener('change', (e) => { if (saveUserName(e.target.value)) showToast('Nome atualizado.'); else e.target.value = appData.userName || ''; });
 $('accountAvatarWrap').addEventListener('click', () => $('accountAvatarInput').click());
 $('accountAvatarInput').addEventListener('change', async (e) => {
   const file = e.target.files[0];
@@ -10497,6 +10586,17 @@ function initAppUI(){
   notifDetectNewTx();
   notifInit();
   if (!localStorage.getItem(TOUR_SEEN_KEY)) setTimeout(offerTourModal, 900);
+  else if (!appData.userName) setTimeout(askNameModal, 1500);
+  setTimeout(backupNudge, 9000);
+}
+function backupNudge(){
+  try {
+    if (!state || backupCounts(state).tx < 15) return;
+    const last = Number(localStorage.getItem(BACKUP_KEY)) || 0, nudged = Number(localStorage.getItem('norte_backup_nudge')) || 0, now = Date.now();
+    if (now - last < 30 * 86400000 || now - nudged < 14 * 86400000) return;
+    localStorage.setItem('norte_backup_nudge', String(now));
+    showToast('Faz tempo que você não faz um backup. Em Conta, toque em "Fazer backup agora".', 7000);
+  } catch (e) {}
 }
 
 /* -------------------- TOUR GUIADO -------------------- */
@@ -10849,6 +10949,33 @@ function endTour(){
   $('sidebar').classList.remove('open'); $('sidebarScrim').classList.remove('show');
   localStorage.setItem(TOUR_SEEN_KEY, '1');
 }
+/* ---- Nome da pessoa: usado no cumprimento do bichinho ---- */
+function suggestedName(){
+  let n = '';
+  try { const m = (currentUser && currentUser.user_metadata) || {}; n = m.given_name || m.full_name || m.name || ''; } catch (e) {}
+  n = String(n || '').trim().split(/\s+/)[0] || '';
+  return /[@\d]/.test(n) ? '' : n;
+}
+function saveUserName(v){
+  v = String(v || '').trim().replace(/\s+/g, ' ').slice(0, 30);
+  if (!v) return false;
+  appData.userName = v;
+  try { mutate(); } catch (e) {}
+  try { renderAccountView(); } catch (e) {}
+  return true;
+}
+function askNameModal(){
+  if (appData.userName || tourState.active || $('modalBackdrop').classList.contains('show')) return;
+  openModal(`<div class="modal-head"><h3>Como podemos te chamar?</h3></div>
+    <div class="modal-body">
+      <p style="color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0 0 12px;">O seu bichinho gosta de chamar você pelo nome. Pode ser só o primeiro nome ou um apelido.</p>
+      <div class="field" style="margin:0;"><input type="text" id="askNameInput" maxlength="30" autocomplete="given-name" placeholder="Seu nome" value="${escapeHtml(suggestedName())}"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" id="askNameSave">Salvar</button></div>`);
+  const done = () => { if (saveUserName($('askNameInput').value)){ closeModal(); showToast('Prazer em te conhecer!'); } else { $('askNameInput').focus(); } };
+  $('askNameSave').addEventListener('click', done);
+  $('askNameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter'){ e.preventDefault(); done(); } });
+}
 function offerTourModal(){
   if (tourState.active || $('modalBackdrop').classList.contains('show')) return;
   const html = `<div class="modal-head"><h3>Quer conhecer o Norte?</h3><button class="btn btn-icon btn-ghost" data-action="close" aria-label="Fechar">✕</button></div>
@@ -10856,14 +10983,16 @@ function offerTourModal(){
       <p style="color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0 0 10px;">Preparei um tour guiado de uns 3 minutos mostrando, tela por tela, para que serve cada função do Norte — contas, lançamentos, cartões, orçamentos, metas e mais.</p>
       <p style="color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0 0 10px;"><b>Antes de começar:</b> o Norte <b>não se conecta ao seu banco</b>. Você cria no app uma conta para cada banco ou carteira que usa de verdade, informa o saldo de hoje e vai lançando suas receitas e despesas.</p>
       <p style="color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0;">Dá para rever o tour quando quiser pelo ícone de <b>interrogação (?)</b> no topo da tela.</p>
+      ${appData.userName ? '' : `<div class="field" style="margin:16px 0 0;"><label>Antes de tudo: como podemos te chamar?</label><input type="text" id="welcomeName" maxlength="30" autocomplete="given-name" placeholder="Seu nome" value="${escapeHtml(suggestedName())}"></div>`}
     </div>
     <div class="modal-foot"><button class="btn btn-ghost" data-action="skip">Agora não</button><button class="btn btn-primary" data-action="start">Começar tour</button></div>`;
   openModal(html);
   localStorage.setItem(TOUR_SEEN_KEY, '1');
   const root = $('modalContent');
-  root.querySelector('[data-action="close"]').addEventListener('click', closeModal);
-  root.querySelector('[data-action="skip"]').addEventListener('click', closeModal);
-  root.querySelector('[data-action="start"]').addEventListener('click', startTour);
+  const grabName = () => { const w = $('welcomeName'); if (w) saveUserName(w.value); };
+  root.querySelector('[data-action="close"]').addEventListener('click', () => { grabName(); closeModal(); });
+  root.querySelector('[data-action="skip"]').addEventListener('click', () => { grabName(); closeModal(); });
+  root.querySelector('[data-action="start"]').addEventListener('click', () => { grabName(); startTour(); });
 }
 $('tourBtn').addEventListener('click', startTour);
 $('tourNextBtn').addEventListener('click', () => { if (tourState.index >= TOUR_STEPS.length - 1) endTour(); else tourGoToStep(tourState.index + 1); });
