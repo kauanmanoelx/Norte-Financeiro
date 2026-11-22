@@ -1762,6 +1762,52 @@ tbody tr:last-child td{border-bottom:0;}
   .fold > summary small{display:none;}
   .nav-item{margin:1px 6px;}
 }
+
+/* ======================= BOAS-VINDAS / PRIMEIROS PASSOS ======================= */
+.onboarding-card.ob2{padding:38px 28px 30px; text-align:center; background:radial-gradient(120% 90% at 50% -10%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 60%), var(--card-grad);}
+.ob-eyebrow{display:inline-block; font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); background:var(--accent-soft); padding:5px 12px; border-radius:999px; margin-bottom:14px;}
+.ob-title{font-size:30px!important; line-height:1.15; margin:0;}
+.ob-lead{max-width:600px; margin:12px auto 0; color:var(--text-dim); font-size:14.5px; line-height:1.65;}
+.ob-lead b{color:var(--text);}
+.ob-safe{display:flex; gap:14px; align-items:flex-start; text-align:left; max-width:640px; margin:22px auto 0; padding:16px 18px; border:1px solid color-mix(in srgb, var(--accent) 35%, var(--border)); background:var(--accent-soft); border-radius:16px;}
+.ob-safe-ic{flex:none; width:38px; height:38px; border-radius:12px; background:color-mix(in srgb, var(--accent) 20%, transparent); color:var(--accent); display:flex; align-items:center; justify-content:center;}
+.ob-safe-ic .icon{width:20px; height:20px;}
+.ob-safe b{display:block; font-size:14.5px; margin-bottom:3px;}
+.ob-safe span{font-size:13px; line-height:1.55; color:var(--text-dim);}
+.ob-how{display:flex; align-items:stretch; justify-content:center; gap:10px; margin:26px auto 4px; max-width:700px; text-align:center;}
+.ob-how-i{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:4px 6px;}
+.ob-how-i i{font-style:normal; font-size:0; width:10px; height:10px; border-radius:50%; background:linear-gradient(135deg,#F3E2B0,#C9A55B); box-shadow:0 0 0 4px var(--accent-soft); margin:6px 0 8px;}
+.ob-how-i b{font-size:13.5px;}
+.ob-how-i span{font-size:12px; color:var(--text-faint); line-height:1.4;}
+.ob-how-sep{display:none; align-self:center; width:28px; height:1px; background:linear-gradient(90deg,transparent,var(--border),transparent); flex:none; margin-top:-26px;}
+.ob2 .onboarding-steps{margin-top:26px;}
+.ob2 .onboarding-step{background:var(--surface-2); display:flex; flex-direction:column; align-items:flex-start;}
+.ob2 .onboarding-step p{flex:1;}
+.ob-tour{margin-top:20px;}
+.ob-tour .icon{width:16px; height:16px; margin-right:8px;}
+@media(max-width:700px){
+  .onboarding-card.ob2{padding:28px 16px 22px;}
+  .ob-title{font-size:25px!important;}
+  .ob-how{flex-direction:column; align-items:stretch; gap:12px;}
+  .ob-how-sep{display:none;}
+  .ob-how-i{flex-direction:row; text-align:left; gap:10px; align-items:center; flex-wrap:wrap;}
+  .ob-how-i i{margin:0 4px 0 0;}
+  .ob-how-i span{flex-basis:100%; padding-left:22px; margin-top:-2px;}
+}
+.wl-head{padding-bottom:8px;}
+.wl-eyebrow{font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin-bottom:4px;}
+.wl-head h3{font-size:24px;}
+.wl-lead{font-size:14px; line-height:1.65; color:var(--text-dim); margin:0 0 16px;}
+.wl-lead b{color:var(--text);}
+.wl-list{display:flex; flex-direction:column; gap:10px;}
+.wl-item{display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border:1px solid var(--border-soft); border-radius:14px; background:var(--surface-2);}
+.wl-item:first-child{border-color:color-mix(in srgb, var(--accent) 40%, var(--border)); background:var(--accent-soft);}
+.wl-ic{flex:none; width:34px; height:34px; border-radius:11px; background:color-mix(in srgb, var(--accent) 18%, transparent); color:var(--accent); display:flex; align-items:center; justify-content:center;}
+.wl-ic .icon{width:18px; height:18px;}
+.wl-item b{display:block; font-size:13.5px; margin-bottom:2px;}
+.wl-item small{display:block; font-size:12.5px; line-height:1.5; color:var(--text-dim);}
+.wl-foot{font-size:12px; color:var(--text-faint); margin:16px 0 0; line-height:1.5;}
+.modal .wl-body{max-height:62vh; overflow-y:auto;}
 </style>
 </head>
 <body>
@@ -4123,34 +4169,55 @@ function renderOnboarding(){
   const hasAccount = state.accounts.length > 0;
   const hasCategory = state.categories.length > 0;
   const hasTx = state.transactions.length > 0;
+  const nm = (typeof petFirstName === 'function' ? petFirstName() : '') || '';
   $('dashboardOnboarding').innerHTML = `
-    <div class="card onboarding-card">
-      <h3 style="font-size:22px;">Bem-vindo(a) ao Norte</h3>
-      <p style="color:var(--text-dim); font-size:13.5px; max-width:440px; margin:8px auto 0;">Leva menos de um minuto para começar. Siga os passos abaixo:</p>
+    <div class="card onboarding-card ob2">
+      <div class="ob-eyebrow">Primeiros passos</div>
+      <h3 class="ob-title">${nm ? 'Bem-vindo(a), ' + escapeHtml(nm) + '!' : 'Bem-vindo(a) ao Norte'}</h3>
+      <p class="ob-lead">O Norte é como uma <b>planilha financeira inteligente</b>: você anota o que entra e o que sai, e ele faz as contas, organiza por categoria e mostra para onde o seu dinheiro está indo.</p>
+
+      <div class="ob-safe">
+        <div class="ob-safe-ic"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div>
+          <b>O Norte não se conecta ao seu banco.</b>
+          <span>Ele nunca pede sua senha, não lê seu extrato e não movimenta dinheiro. É você quem lança os valores — por isso seus dados bancários ficam sempre só com você.</span>
+        </div>
+      </div>
+
+      <div class="ob-how">
+        <div class="ob-how-i"><i>1</i><b>Você lança</b><span>receitas e despesas, em segundos</span></div>
+        <div class="ob-how-sep"></div>
+        <div class="ob-how-i"><i>2</i><b>O Norte organiza</b><span>saldos, categorias, cartões e contas fixas</span></div>
+        <div class="ob-how-sep"></div>
+        <div class="ob-how-i"><i>3</i><b>Você enxerga</b><span>gráficos, metas e saúde financeira</span></div>
+      </div>
+
       <div class="onboarding-steps">
         <div class="onboarding-step ${hasAccount?'done':''}">
           <div class="num">${hasAccount?'✓':'1'}</div>
           <h5>Crie uma conta</h5>
-          <p>Uma para cada banco ou fintech que você usa (Nubank, Inter…) e, se quiser, uma "Carteira" para o dinheiro em espécie. O Norte <b>não conecta ao banco</b>: você informa o saldo de hoje e vai lançando o resto.</p>
+          <p>Uma para cada banco ou carteira que você usa (Nubank, Inter, dinheiro em espécie…). Informe o saldo de hoje e pronto — é só o ponto de partida.</p>
           ${!hasAccount ? '<button class="btn btn-primary btn-sm" data-action="onb-account">Criar conta</button>' : ''}
         </div>
         <div class="onboarding-step ${hasCategory?'done':''}">
           <div class="num">${hasCategory?'✓':'2'}</div>
           <h5>Revise as categorias</h5>
-          <p>Já criamos algumas categorias comuns de receita e despesa para você usar.</p>
+          <p>Já deixamos categorias comuns de receita e despesa prontas. Você pode editar, apagar ou criar as suas.</p>
           <button class="btn btn-ghost btn-sm" data-action="onb-categories">Ver categorias</button>
         </div>
         <div class="onboarding-step ${hasTx?'done':''}">
           <div class="num">${hasTx?'✓':'3'}</div>
-          <h5>Lance sua primeira transação</h5>
-          <p>Registre uma receita ou despesa para começar a ver seus números. Dica: "Lançar por frase" faz isso em segundos (ex.: mercado 85,90).</p>
+          <h5>Lance a primeira transação</h5>
+          <p>Registre uma receita ou despesa. Dica: em <b>"Lançar por frase"</b> basta escrever algo como <i>mercado 85,90</i>.</p>
           ${hasAccount ? '<button class="btn btn-primary btn-sm" data-action="onb-tx">Nova transação</button>' : ''}
         </div>
       </div>
+      <button class="btn btn-ghost ob-tour" data-action="onb-tour"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>Ver o tour guiado do app</button>
     </div>`;
   const root = $('dashboardOnboarding');
   root.querySelector('[data-action="onb-account"]')?.addEventListener('click', () => { switchView('accounts'); setTimeout(() => openAccountModal(), 0); });
   root.querySelector('[data-action="onb-categories"]')?.addEventListener('click', () => switchView('accounts'));
+  root.querySelector('[data-action="onb-tour"]')?.addEventListener('click', () => startTour());
   root.querySelector('[data-action="onb-tx"]')?.addEventListener('click', () => { switchView('transactions'); setTimeout(() => openTransactionModal(), 0); });
 }
 /* ---- Saldo total: disponível, cofrinhos, contas e olhinho ---- */
@@ -12353,7 +12420,7 @@ function initAppUI(){
   setTimeout(checkReminders, 1200);
   notifDetectNewTx();
   notifInit();
-  if (!localStorage.getItem(TOUR_SEEN_KEY)) setTimeout(offerTourModal, 900);
+  if (!tourSeen()) setTimeout(offerTourModal, 900);
   else if (!appData.userName) setTimeout(askNameModal, 1500);
   setTimeout(backupNudge, 9000);
   setTimeout(installNudge, 7000);
@@ -12370,16 +12437,27 @@ function backupNudge(){
 
 /* -------------------- TOUR GUIADO -------------------- */
 const TOUR_SEEN_KEY = 'norte_tour_seen_v1';
+function normUid(){ try { return (currentUser && currentUser.id) || 'local'; } catch(e){ return 'local'; } }
+function tourSeen(){
+  try {
+    if (appData.tourSeen || localStorage.getItem(TOUR_SEEN_KEY + '_' + normUid())) return true;
+    if (state.accounts.length || state.transactions.length) return true; /* quem já usa o app não precisa do tour de novo */
+  } catch(e){}
+  return false;
+}
+function markTourSeen(){
+  try { localStorage.setItem(TOUR_SEEN_KEY + '_' + normUid(), '1'); localStorage.setItem(TOUR_SEEN_KEY, '1'); if (!appData.tourSeen){ appData.tourSeen = true; mutate(); } } catch(e){}
+}
 let tourState = { active: false, index: 0 };
 const TOUR_STEPS = [
   /* ---------- Começo: o que é o Norte e como ele funciona ---------- */
   {
     title: 'Bem-vindo(a) ao Norte',
-    body: `O Norte é o seu <b>controle financeiro pessoal</b>: você anota o dinheiro que entra e o que sai, e ele organiza tudo — saldo, gastos por categoria, cartões, contas a pagar, metas e muito mais. Este tour leva uns 3 minutos e mostra, tela por tela, para que serve cada coisa. Use <b>Próximo</b> e <b>Voltar</b> (ou as setas do teclado) e <b>"Pular tour"</b> para sair quando quiser. Para rever depois, clique no ícone de <b>interrogação (?)</b> no topo da tela.`,
+    body: `O Norte é como uma <b>planilha financeira inteligente</b>: você anota o dinheiro que entra e o que sai, e ele faz as contas sozinho — saldo, gastos por categoria, cartões, contas a pagar, metas e muito mais, tudo organizado e fácil de entender. Este tour leva uns 3 minutos e mostra, tela por tela, para que serve cada coisa. Use <b>Próximo</b> e <b>Voltar</b> (ou as setas do teclado) e <b>"Pular tour"</b> para sair quando quiser. Para rever depois, clique no ícone de <b>interrogação (?)</b> no topo da tela.`,
   },
   {
     title: 'Importante: o Norte não se conecta ao seu banco',
-    body: `O Norte <b>não acessa a sua conta no banco</b> — ele nunca pede sua senha nem lê seus dados bancários. O que você faz aqui é criar uma <b>cópia</b> de cada conta que você realmente tem e ir anotando o que acontece nela. É simples: <b>1)</b> crie uma conta no Norte para cada banco, fintech ou carteira que você usa de verdade; <b>2)</b> informe quanto você tem em cada uma hoje (o <b>saldo inicial</b>); <b>3)</b> lance suas receitas e despesas — o Norte atualiza os saldos sozinho.`,
+    body: `O Norte <b>não se conecta ao seu banco</b> — não acessa sua conta, nunca pede sua senha, não lê seu extrato e não movimenta dinheiro. Pense nele como uma planilha bem mais esperta: você cria uma <b>cópia</b> de cada conta que realmente tem e vai anotando o que acontece nela. É simples: <b>1)</b> crie uma conta no Norte para cada banco, fintech ou carteira que você usa de verdade; <b>2)</b> informe quanto você tem em cada uma hoje (o <b>saldo inicial</b>); <b>3)</b> lance suas receitas e despesas — o Norte atualiza os saldos sozinho.`,
     example: `Quanto mais fiel você for ao que acontece de verdade, mais o saldo do Norte bate com o do seu banco. Se um dia ficar diferente, confira os lançamentos e, se precisar, edite a conta para corrigir o saldo inicial.`,
   },
 
@@ -12716,7 +12794,8 @@ function endTour(){
   tourState.token = (tourState.token || 0) + 1;
   ['tourOverlayTop','tourOverlayBottom','tourOverlayLeft','tourOverlayRight','tourRing','tourCard'].forEach(id => $(id).style.display = 'none');
   $('sidebar').classList.remove('open'); $('sidebarScrim').classList.remove('show');
-  localStorage.setItem(TOUR_SEEN_KEY, '1');
+  markTourSeen();
+  setTimeout(() => installNudge(), 1500);
 }
 /* ---- Nome da pessoa: usado no cumprimento do bichinho ---- */
 function suggestedName(){
@@ -12747,20 +12826,24 @@ function askNameModal(){
 }
 function offerTourModal(){
   if (tourState.active || $('modalBackdrop').classList.contains('show')) return;
-  const html = `<div class="modal-head"><h3>Quer conhecer o Norte?</h3><button class="btn btn-icon btn-ghost" data-action="close" aria-label="Fechar">✕</button></div>
-    <div class="modal-body">
-      <p style="color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0 0 10px;">Preparei um tour guiado de uns 3 minutos mostrando, tela por tela, para que serve cada função do Norte — contas, lançamentos, cartões, orçamentos, metas e mais.</p>
-      <p style="color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0 0 10px;"><b>Antes de começar:</b> o Norte <b>não se conecta ao seu banco</b>. Você cria no app uma conta para cada banco ou carteira que usa de verdade, informa o saldo de hoje e vai lançando suas receitas e despesas.</p>
-      <p style="color:var(--text-dim); font-size:13.5px; line-height:1.6; margin:0;">Dá para rever o tour quando quiser pelo ícone de <b>interrogação (?)</b> no topo da tela.</p>
-      ${appData.userName ? '' : `<div class="field" style="margin:16px 0 0;"><label>Antes de tudo: como podemos te chamar?</label><input type="text" id="welcomeName" maxlength="30" autocomplete="given-name" placeholder="Seu nome" value="${escapeHtml(suggestedName())}"></div>`}
+  const html = `<div class="modal-head wl-head"><div><div class="wl-eyebrow">Que bom ter você aqui</div><h3>Bem-vindo(a) ao Norte</h3></div><button class="btn btn-icon btn-ghost" data-action="close" aria-label="Fechar">✕</button></div>
+    <div class="modal-body wl-body">
+      <p class="wl-lead">O Norte é como uma <b>planilha financeira inteligente</b>: você anota o que entra e o que sai, e ele organiza tudo e mostra para onde o seu dinheiro vai.</p>
+      <div class="wl-list">
+        <div class="wl-item"><span class="wl-ic"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><div><b>Não se conecta ao seu banco</b><small>Nunca pede senha, não lê extrato e não movimenta dinheiro. Você lança os valores.</small></div></div>
+        <div class="wl-item"><span class="wl-ic"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="10" x2="9" y2="20"/></svg></span><div><b>Faz as contas por você</b><small>Saldos, categorias, cartões, contas fixas, orçamentos e metas — tudo atualizado sozinho.</small></div></div>
+        <div class="wl-item"><span class="wl-ic"><svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><div><b>Ajuda a gastar melhor</b><small>Gráficos e a nota de saúde financeira mostram onde dá para economizar.</small></div></div>
+      </div>
+      ${appData.userName ? '' : `<div class="field" style="margin:18px 0 0;"><label for="welcomeName">Como podemos te chamar?</label><input type="text" id="welcomeName" maxlength="30" autocomplete="given-name" placeholder="Seu nome" value="${escapeHtml(suggestedName())}"></div>`}
+      <p class="wl-foot">O tour leva uns 3 minutos e explica cada tela. Você pode rever quando quiser pelo ícone <b>?</b> no topo.</p>
     </div>
-    <div class="modal-foot"><button class="btn btn-ghost" data-action="skip">Agora não</button><button class="btn btn-primary" data-action="start">Começar tour</button></div>`;
+    <div class="modal-foot"><button class="btn btn-ghost" data-action="skip">Agora não</button><button class="btn btn-primary" data-action="start">Começar o tour</button></div>`;
   openModal(html);
-  localStorage.setItem(TOUR_SEEN_KEY, '1');
+  markTourSeen();
   const root = $('modalContent');
   const grabName = () => { const w = $('welcomeName'); if (w) saveUserName(w.value); };
-  root.querySelector('[data-action="close"]').addEventListener('click', () => { grabName(); closeModal(); });
-  root.querySelector('[data-action="skip"]').addEventListener('click', () => { grabName(); closeModal(); });
+  root.querySelector('[data-action="close"]').addEventListener('click', () => { grabName(); closeModal(); setTimeout(() => installNudge(), 1500); });
+  root.querySelector('[data-action="skip"]').addEventListener('click', () => { grabName(); closeModal(); setTimeout(() => installNudge(), 1500); });
   root.querySelector('[data-action="start"]').addEventListener('click', () => { grabName(); startTour(); });
 }
 $('tourBtn').addEventListener('click', startTour);
@@ -12823,15 +12906,16 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 }
 
 /* -------------------- Convite para instalar o app (aparece 1 vez) -------------------- */
-const INSTALL_KEY='norte_install_nudge_v1';
+const INSTALL_KEY_BASE='norte_install_nudge_v1';
+function installKey(){ return INSTALL_KEY_BASE + '_' + normUid(); }
 let deferredInstall=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;});
-window.addEventListener('appinstalled',()=>{try{localStorage.setItem(INSTALL_KEY,'done');}catch(e){} hideInstallCard();});
+window.addEventListener('appinstalled',()=>{try{localStorage.setItem(installKey(),'done');}catch(e){} hideInstallCard();});
 function isStandalone(){return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}
 function hideInstallCard(){const c=document.getElementById('installCard');if(c){c.classList.remove('show');setTimeout(()=>c.remove(),400);}}
 function installNudge(tries){
   try{
-    if(localStorage.getItem(INSTALL_KEY)||isStandalone())return;
+    if(localStorage.getItem(installKey())||isStandalone())return;
     if(!(location.protocol==='https:'))return;
     const modal=document.getElementById('modalBackdrop');
     if((modal&&modal.classList.contains('show'))||(typeof tourState!=='undefined'&&tourState.active)){ if((tries||0)<8)setTimeout(()=>installNudge((tries||0)+1),5000); return; }
@@ -12842,11 +12926,11 @@ function installNudge(tries){
     else if(ios){texto='No iPhone: toque em <b>Compartilhar</b> (o quadradinho com a seta) e depois em <b>Adicionar à Tela de Início</b>.';}
     else if(mobile){texto='Para instalar: toque nos <b>três pontinhos</b> do navegador e escolha <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b>).';}
     else return;
-    try{localStorage.setItem(INSTALL_KEY,'shown');}catch(e){}
+    try{localStorage.setItem(installKey(),'shown');}catch(e){}
     const c=document.createElement('div');c.id='installCard';c.className='install-card';c.setAttribute('role','dialog');
     c.innerHTML='<img src="favicon-64.png" alt=""><div><div class="ic-t">Instale o app Norte</div><div class="ic-d">'+texto+'</div><div class="ic-b">'+botao+'<button class="ic-no" id="icNo">Agora não</button></div></div><button class="ic-x" id="icX" aria-label="Fechar">×</button>';
     document.body.appendChild(c);requestAnimationFrame(()=>c.classList.add('show'));
-    const fechar=()=>{try{localStorage.setItem(INSTALL_KEY,'done');}catch(e){}hideInstallCard();};
+    const fechar=()=>{try{localStorage.setItem(installKey(),'done');}catch(e){}hideInstallCard();};
     c.querySelector('#icNo').onclick=fechar;c.querySelector('#icX').onclick=fechar;
     const go=c.querySelector('#icGo');
     if(go)go.onclick=async()=>{try{deferredInstall.prompt();await deferredInstall.userChoice;}catch(e){} deferredInstall=null;fechar();};
