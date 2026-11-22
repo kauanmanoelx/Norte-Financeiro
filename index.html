@@ -769,6 +769,9 @@ body.readonly-mode .nt-card .nt-box{pointer-events:none;}
 .chart-card{padding:22px;}
 .chart-card h4{font-size:12.5px; margin-bottom:16px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-faint);}
 .chart-wrap{position:relative; height:230px;}
+.chart-sub{display:flex; flex-wrap:wrap; gap:4px 16px; align-items:baseline; font-size:13px; color:var(--text); margin:-2px 0 14px; line-height:1.5;}
+.chart-sub b{font-weight:700;} .chart-sub .pos,.chart-sub b.pos{color:var(--positive);} .chart-sub .neg,.chart-sub b.neg{color:var(--negative);}
+.chart-sub-dim{color:var(--text-faint); font-size:12px;}
 
 .alert{
   display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:10px;
@@ -1991,11 +1994,11 @@ tbody tr:last-child td{border-bottom:0;}
 
         <div id="dashboardCharts">
         <div class="grid grid-2" style="margin-top:6px;">
-          <div class="card chart-card"><h4>Fluxo de caixa — últimos 6 meses</h4><div class="chart-wrap"><canvas id="chartCashflow"></canvas></div></div>
+          <div class="card chart-card"><h4>Fluxo de caixa — últimos 6 meses</h4><div class="chart-sub" id="cashflowSub"></div><div class="chart-wrap"><canvas id="chartCashflow"></canvas></div></div>
           <div class="card chart-card"><div class="chart-head"><h4 id="chartCategoryTitle">Despesas por categoria (mês atual)</h4><div class="seg-mini" role="group" aria-label="Tipo de categoria"><button type="button" class="seg-mini-btn active" data-catmode="expense" aria-pressed="true">Despesas</button><button type="button" class="seg-mini-btn" data-catmode="income" aria-pressed="false">Receitas</button></div></div><div class="chart-wrap"><canvas id="chartCategory"></canvas><div class="empty-state" id="chartCategoryEmpty" style="display:none; padding:30px 10px;"><svg class="icon icon-lg" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg><p id="chartCategoryEmptyTxt">Sem despesas neste mês.</p></div></div></div>
         </div>
         <div class="grid" style="margin-top:16px;">
-          <div class="card chart-card"><h4>Patrimônio líquido — últimos 6 meses</h4><div class="chart-wrap"><canvas id="chartNetworth"></canvas></div></div>
+          <div class="card chart-card"><h4>Patrimônio líquido — últimos 6 meses</h4><div class="chart-sub" id="networthSub"></div><div class="chart-wrap"><canvas id="chartNetworth"></canvas></div></div>
         </div>
         </div>
 
@@ -4581,26 +4584,47 @@ function renderDashboard(){
     destroyChart('chartCashflow');
     const incSeries = months.map(m => monthIncomeExpense(m).income);
     const expSeries = months.map(m => monthIncomeExpense(m).expense);
+    const ff = getComputedStyle(document.body).fontFamily;
+    try { Chart.defaults.font.family = ff; } catch(e){}
+    const labelsM = months.map(monthLabel);
+    const resSeries = incSeries.map((v,i) => v - expSeries[i]);
     charts.chartCashflow = new Chart($('chartCashflow'), {
-      type: 'line',
-      data: { labels: months.map(monthLabel), datasets: [
-        { label: 'Receitas', data: incSeries, borderColor: getCss('--positive'), backgroundColor: 'transparent', tension: .35, borderWidth: 2.5, pointRadius: 3 },
-        { label: 'Despesas', data: expSeries, borderColor: getCss('--negative'), backgroundColor: 'transparent', tension: .35, borderWidth: 2.5, pointRadius: 3 },
+      type: 'bar',
+      data: { labels: labelsM, datasets: [
+        { label: 'Receitas', data: incSeries, backgroundColor: hexToRgba(getCss('--positive'), .85), hoverBackgroundColor: getCss('--positive'), borderRadius: 7, borderSkipped: false, maxBarThickness: 30 },
+        { label: 'Despesas', data: expSeries, backgroundColor: hexToRgba(getCss('--negative'), .85), hoverBackgroundColor: getCss('--negative'), borderRadius: 7, borderSkipped: false, maxBarThickness: 30 },
       ]},
-      options: baseChartOpts(th, true)
+      options: niceChartOpts(th, true, ff, {
+        footer: (items) => { const i = items[0].dataIndex; const r = resSeries[i]; return (r >= 0 ? 'Sobrou: ' : 'Faltou: ') + fmtBRL(Math.abs(r)); }
+      })
     });
+    const last = months.length - 1, avgInc = incSeries.reduce((a,b)=>a+b,0)/months.length, avgExp = expSeries.reduce((a,b)=>a+b,0)/months.length;
+    const rl = resSeries[last];
+    $('cashflowSub').innerHTML = (rl >= 0
+      ? `<span>Em ${labelsM[last]}: sobraram <b class="pos">${fmtBRL(rl)}</b></span>`
+      : `<span>Em ${labelsM[last]}: você gastou <b class="neg">${fmtBRL(-rl)}</b> a mais do que recebeu</span>`)
+      + `<span class="chart-sub-dim">Média mensal: ${fmtBRL(avgInc)} entra · ${fmtBRL(avgExp)} sai</span>`;
 
     renderCategoryDonut(ym);
 
     destroyChart('chartNetworth');
     if ($('chartNetworth')) {
+      const nwSeries = months.map(netWorthAtMonthEnd);
+      const acc = getCss('--accent');
       charts.chartNetworth = new Chart($('chartNetworth'), {
         type: 'line',
-        data: { labels: months.map(monthLabel), datasets: [
-          { label: 'Patrimônio líquido', data: months.map(netWorthAtMonthEnd), borderColor: getCss('--accent'), backgroundColor: hexToRgba(getCss('--accent'),.12), fill: true, tension: .35, borderWidth: 2.5, pointRadius: 3 }
+        data: { labels: labelsM, datasets: [
+          { label: 'Patrimônio líquido', data: nwSeries, borderColor: acc, borderWidth: 2.5, fill: true, cubicInterpolationMode: 'monotone', tension: .3,
+            backgroundColor: (ctx) => { const ca = ctx.chart.chartArea; if (!ca) return hexToRgba(acc,.12); const g = ctx.chart.ctx.createLinearGradient(0, ca.top, 0, ca.bottom); g.addColorStop(0, hexToRgba(acc,.34)); g.addColorStop(1, hexToRgba(acc,0)); return g; },
+            pointRadius: (ctx) => ctx.dataIndex === nwSeries.length - 1 ? 5 : 0, pointHoverRadius: 6, pointBackgroundColor: acc, pointBorderColor: getCss('--bg-elev') || '#111', pointBorderWidth: 2 }
         ]},
-        options: baseChartOpts(th, false)
+        options: niceChartOpts(th, false, ff, {
+          footer: (items) => { const i = items[0].dataIndex; if (i === 0) return ''; const d = nwSeries[i] - nwSeries[i-1]; return 'vs. mês anterior: ' + (d >= 0 ? '+' : '−') + fmtBRL(Math.abs(d)); },
+          nonneg: Math.min(...nwSeries) >= 0
+        })
       });
+      const delta = nwSeries[last] - nwSeries[0];
+      $('networthSub').innerHTML = `<span>Agora: <b>${fmtBRL(nwSeries[last])}</b></span>` + (delta === 0 ? '' : `<span class="${delta>0?'pos':'neg'}">${delta>0?'▲':'▼'} ${delta>0?'+':'−'}${fmtBRL(Math.abs(delta))} em ${months.length} meses</span>`);
     }
   });
 }
@@ -4736,6 +4760,33 @@ function hexToRgba(hex, a){
   if (hex.length===3) hex = hex.split('').map(c=>c+c).join('');
   const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
   return `rgba(${r},${g},${b},${a})`;
+}
+function chartShort(v){
+  const n = Number(v), a = Math.abs(n);
+  if (a >= 1000000) return 'R$ ' + (n/1000000).toLocaleString('pt-BR',{maximumFractionDigits:1}) + ' mi';
+  if (a >= 1000) return 'R$ ' + (n/1000).toLocaleString('pt-BR',{maximumFractionDigits:1}) + ' mil';
+  return 'R$ ' + n.toLocaleString('pt-BR',{maximumFractionDigits:0});
+}
+function niceChartOpts(th, showLegend, ff, o){
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  return {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    layout: { padding: { top: 6, right: 4 } },
+    plugins: {
+      legend: { display: showLegend, position: 'bottom', labels: { color: th.text, usePointStyle: true, pointStyle: 'rectRounded', boxWidth: 9, boxHeight: 9, padding: 16, font: { size: 12, family: ff } } },
+      tooltip: {
+        backgroundColor: dark ? 'rgba(12,12,14,.96)' : 'rgba(255,255,255,.98)', titleColor: dark ? '#fff' : '#1a1a1a', bodyColor: dark ? '#e8e8e8' : '#333', footerColor: getCss('--accent'),
+        borderColor: dark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.12)', borderWidth: 1, padding: 12, cornerRadius: 12, boxPadding: 5, usePointStyle: true,
+        titleFont: { family: ff, size: 13, weight: '700' }, bodyFont: { family: ff, size: 13 }, footerFont: { family: ff, size: 12, weight: '700' }, footerMarginTop: 8,
+        callbacks: { label: (c) => ' ' + c.dataset.label + ': ' + fmtBRL(c.parsed.y), footer: o && o.footer }
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, border: { display: false }, ticks: { color: th.text, font: { size: 12, family: ff } } },
+      y: { beginAtZero: !!(o && o.nonneg) || showLegend, border: { display: false }, grid: { color: th.grid }, ticks: { color: th.text, font: { size: 11, family: ff }, maxTicksLimit: 5, callback: v => chartShort(v) } }
+    }
+  };
 }
 function baseChartOpts(th, showLegend){
   return {
