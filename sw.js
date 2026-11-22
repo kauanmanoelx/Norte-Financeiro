@@ -11,7 +11,7 @@
 //
 // Ao publicar uma atualização importante do app, mude o número da versão
 // abaixo (CACHE_NAME) — isso força os aparelhos a baixarem tudo de novo.
-const CACHE_NAME = 'norte-financeiro-v5';
+const CACHE_NAME = 'norte-financeiro-v6';
 const APP_SHELL = [
   './index.html',
   './manifest.json',
@@ -20,6 +20,7 @@ const APP_SHELL = [
   './badge-96.png',
   './apple-touch-icon.png',
   './favicon-32.png',
+  './favicon-64.png',
 ];
 
 self.addEventListener('install', (event) => {
