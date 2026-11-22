@@ -12463,8 +12463,8 @@ const TOUR_STEPS = [
 
   /* ---------- Passo 1: contas, cofrinhos, categorias ---------- */
   {
-    view: 'accounts', target: '#addAccountBtn', title: 'Passo 1: crie suas contas',
-    body: `Clique em <b>Nova conta</b> e escolha o que quer adicionar: <b>Banco ou fintech</b> (Nubank, Inter, Mercado Pago, Itaú…) ou <b>Carteira física</b> (o dinheiro em espécie que você tem em mãos). Use o <b>mesmo nome</b> da conta real — o Norte reconhece a logo dos bancos mais comuns — e informe o <b>saldo inicial</b>: quanto você tem ali <b>hoje</b>, como aparece no app do seu banco. Nas contas de banco você ainda escolhe o tipo: corrente, poupança, investimentos ou outro.`,
+    view: 'accounts', target: '#addAccountBtn', gate: 'account', title: 'Passo 1: crie sua primeira conta',
+    body: `Antes de continuar, vamos criar a sua primeira conta — assim, nos próximos passos, o tour consegue mostrar os seus saldos e gráficos de verdade. Clique em <b>Nova conta</b> (ou no botão abaixo) e escolha o que quer adicionar: <b>Banco ou fintech</b> (Nubank, Inter, Mercado Pago, Itaú…) ou <b>Carteira física</b> (o dinheiro em espécie que você tem em mãos). Use o <b>mesmo nome</b> da conta real — o Norte reconhece a logo dos bancos mais comuns — e informe o <b>saldo inicial</b>: quanto você tem ali <b>hoje</b>, como aparece no app do seu banco. Nas contas de banco você ainda escolhe o tipo: corrente, poupança, investimentos ou outro.`,
     example: `Tem R$ 1.250,00 no Nubank e R$ 80,00 em dinheiro na bolsa? Crie <b>"Nubank" com saldo 1.250,00</b> e <b>"Carteira" com saldo 80,00</b>. O Saldo total do Norte já começa certo: R$ 1.330,00.`,
   },
   {
@@ -12485,7 +12485,7 @@ const TOUR_STEPS = [
   /* ---------- Passo 2: lançar o dia a dia ---------- */
   {
     view: 'transactions', target: '#addTxBtn', title: 'Passo 2: registre seus lançamentos',
-    body: `É aqui que você anota o dia a dia — também pelo atalho <b>N</b>, em qualquer tela. Escolha o tipo (<b>receita</b>, <b>despesa</b> ou <b>transferência</b>), o valor, a data, a descrição, a categoria, a conta e a forma de pagamento (Pix, cartão de débito ou de crédito, boleto, dinheiro ou transferência). Também dá para <b>parcelar</b>, marcar como <b>recorrente</b>, anexar a <b>foto do comprovante</b>, colocar num <b>grupo</b>, <b>dividir o gasto com alguém</b> e anotar como você se sentiu sobre ele.`,
+    body: `É aqui que você anota o dia a dia — também pelo atalho <b>N</b>, em qualquer tela. Escolha o tipo (<b>receita</b>, <b>despesa</b> ou <b>transferência</b>), o valor, a data, a descrição, a categoria, a forma de pagamento (Pix, cartão de débito ou de crédito, boleto, dinheiro ou transferência) e a conta. O que é opcional fica em <b>"Mais opções"</b> (toque na setinha): <b>parcelar</b>, marcar como <b>recorrente</b>, <b>dividir o gasto com alguém</b>, anexar o <b>comprovante</b>, anotar como você se sentiu e escrever notas. O <b>grupo</b> também pode ser escolhido ali mesmo.`,
     example: `Uma compra de R$ 900 em 3x no cartão de crédito vira <b>3 lançamentos de R$ 300</b>, um em cada mês. O dinheiro só sai da sua conta quando você paga a fatura, não na hora da compra.`,
   },
   {
@@ -12495,7 +12495,7 @@ const TOUR_STEPS = [
   },
   {
     view: 'transactions', target: '[data-nav="transactions"]', title: 'Transações',
-    body: `Todos os seus lançamentos num só lugar. Dá para <b>buscar</b> por descrição, <b>filtrar</b> por tipo, categoria, conta, grupo e período, <b>editar</b>, <b>duplicar</b> um lançamento parecido (bom para gastos que se repetem) e <b>exportar em CSV</b>. Os gastos que você dividiu com alguém ficam em <b>"Acertos pendentes"</b> até você marcar como acertado.`,
+    body: `Todos os seus lançamentos num só lugar. Dá para <b>buscar</b> por descrição, filtrar por tipo e, no botão <b>Filtros</b>, por categoria, conta, grupo e período, <b>editar</b>, <b>duplicar</b> um lançamento parecido (bom para gastos que se repetem) e <b>exportar em CSV</b>. Os gastos que você dividiu com alguém ficam em <b>"Acertos pendentes"</b> até você marcar como acertado.`,
     example: `Filtre só as despesas de "Mercado" do mês passado para ver rapidinho quanto você gastou com isso.`,
   },
 
@@ -12510,7 +12510,7 @@ const TOUR_STEPS = [
   },
   {
     view: 'dashboard', target: '#projCard', title: 'Projeções',
-    body: `Aqui o Norte mostra <b>como o seu saldo deve chegar ao fim do mês</b>, já considerando as contas fixas que ainda não foram lançadas. Logo abaixo, o cartão <b>"Seu dinheiro daqui a…"</b> estima quanto você terá em 3, 6 ou 12 meses se o seu ritmo atual continuar. São estimativas, não garantias. Se você usa cofrinhos, dá para escolher se a conta considera só o dia a dia ou também os cofrinhos.`,
+    body: `Aqui o Norte mostra <b>como o seu saldo deve chegar ao fim do mês</b>, já considerando as contas fixas que ainda não foram lançadas. Logo abaixo, a <b>Projeção de longo prazo</b> (toque na setinha para abrir) estima quanto você terá em 3, 6 ou 12 meses se o seu ritmo atual continuar. São estimativas, não garantias. Se você usa cofrinhos, dá para escolher se a conta considera só o dia a dia ou também os cofrinhos.`,
   },
   {
     view: 'dashboard', target: '#kpiGrid', title: 'Receitas, despesas e resultado',
@@ -12522,7 +12522,7 @@ const TOUR_STEPS = [
   },
   {
     view: 'dashboard', target: ['#dashboardInsights', '#dashboardAlerts', '#dashboardUpcoming'], title: 'Alertas, Raio-x e próximos vencimentos',
-    body: `Mais abaixo, o Norte <b>avisa</b> quando um orçamento passou do limite, quando há contas fixas ou itens a pagar para lançar ou atrasados e quando um lembrete chegou. O <b>Raio-x financeiro</b> destaca coisas como o seu maior gasto do mês, o dia da semana que mais pesa no bolso e a categoria que mais cresceu. Os próximos vencimentos também aparecem por aqui.`,
+    body: `Mais abaixo, o Norte <b>avisa</b> quando um orçamento passou do limite, quando há contas fixas ou itens a pagar para lançar ou atrasados e quando um lembrete chegou. O <b>Raio-x financeiro</b> (toque na setinha para abrir) destaca coisas como o seu maior gasto do mês, o dia da semana que mais pesa no bolso e a categoria que mais cresceu. Os próximos vencimentos também aparecem por aqui.`,
   },
   {
     view: 'dashboard', target: '#dashboardCharts', title: 'Gráficos',
@@ -12572,7 +12572,7 @@ const TOUR_STEPS = [
   },
   {
     view: 'health', target: '[data-nav="health"]', title: 'Saúde Financeira',
-    body: `Uma nota de 0% a 100%, calculada automaticamente com base em 6 fatores: taxa de poupança do mês, comprometimento com contas fixas, orçamentos respeitados, tendência do patrimônio, dependência de parcelamento e metas em dia. A tela mostra o peso de cada fator, a evolução dos últimos 6 meses, <b>dicas do que melhorar</b> e suas <b>conquistas</b>.`,
+    body: `Uma nota de 0% a 100%, calculada automaticamente com base em vários fatores: taxa de poupança, comprometimento com contas fixas, orçamentos respeitados, tendência do patrimônio, pontualidade, parcelamentos e metas em dia. A tela mostra a evolução dos últimos 6 meses e <b>dicas do que melhorar</b>; em "Como esse número foi calculado" você vê cada fator, e em "Conquistas" suas medalhas.`,
     example: `Se boa parte da sua renda está comprometida com contas fixas, esse fator puxa a nota para baixo — e a tela mostra, fator por fator, o porquê da nota.`,
   },
   {
@@ -12596,12 +12596,12 @@ const TOUR_STEPS = [
   },
   {
     view: 'notes', target: '[data-nav="notes"]', title: 'Notas & Lembretes',
-    body: `Um bloco de notas livre: compromissos, ideias, listas de itens — o que fizer sentido para você. Organize com <b>etiquetas</b>, defina <b>data e hora</b> e peça um <b>aviso</b> na hora marcada (com o app aberto no navegador), e vincule a nota a um <b>grupo</b>. Para guardar algo sigiloso, crie uma <b>nota privada</b>, protegida por uma senha só sua.`,
+    body: `Use o botão <b>+</b> para criar uma <b>nota</b> com texto formatado e imagens, uma <b>lista de tarefas</b>, um <b>desafio de dias</b>, um <b>desenho</b> ou uma <b>anotação com lembrete</b> (data, hora e aviso). Fixe as mais importantes, organize por cores e etiquetas, vincule a um <b>grupo</b> e use a busca. Para algo sigiloso, crie uma <b>nota privada</b> protegida por uma senha só sua.`,
     example: `Algo como <b>"Ligar para o banco sobre a fatura"</b> ou <b>"Renovar o seguro do carro em outubro"</b>.`,
   },
   {
     view: 'settings', target: '[data-nav="settings"]', title: 'Conta e backup',
-    body: `Sua área pessoal: <b>foto de perfil</b>, <b>e-mail</b> cadastrado e o botão para <b>redefinir a senha</b>. Aqui também ficam os <b>backups</b>: baixar todos os seus dados em .json, importar um backup anterior ou exportar uma planilha Excel (só para consulta). Mais abaixo, a "Zona de risco" apaga todos os dados — use com muito cuidado.`,
+    body: `Sua área pessoal: <b>foto de perfil</b>, <b>e-mail</b> cadastrado e o botão para <b>redefinir a senha</b>. Aqui também ficam os <b>backups</b>: baixar todos os seus dados em .json, importar um backup anterior ou exportar uma planilha Excel (só para consulta). Mais abaixo, a "Zona de risco" (recolhida por segurança) apaga todos os dados — use com muito cuidado.`,
     example: `Antes de qualquer teste maior, <b>baixe um backup</b>: é só um clique em "Baixar backup (.json)". Para restaurar, use sempre o .json.`,
   },
 
@@ -12633,6 +12633,9 @@ const TOUR_STEPS = [
   { target: '#logoutBtn', title: 'Sair da conta',
     missingNote: `o botão <b>Sair</b> fica no rodapé do menu e aparece quando você está com a conta conectada.`,
     body: `Encerra a sua sessão neste aparelho. Seus dados ficam guardados na sua conta e voltam quando você entrar de novo. Em computador ou celular de outra pessoa, saia sempre que terminar de usar.` },
+  { title: 'Instale o Norte no seu aparelho',
+    body: `Dá para usar o Norte como um app de verdade, com ícone na tela inicial e abrindo em tela cheia. No <b>Android</b> e no <b>computador (Chrome)</b>, toque em <b>Instalar</b> quando o Norte oferecer (ou no menu do navegador → <b>Instalar app</b>). No <b>iPhone</b>, abra no Safari, toque em <b>Compartilhar</b> e depois em <b>Adicionar à Tela de Início</b>.`,
+  },
   { title: 'Pronto! 🎉',
     body: `Esse foi o Norte por dentro. Para começar: <b>crie suas contas</b> com o saldo de hoje, <b>lance suas primeiras transações</b> e volte aqui no Dashboard para ver tudo se organizar. Dica: no celular, abra o menu do navegador e escolha <b>"Instalar app"</b> ou <b>"Adicionar à tela inicial"</b> para ter o Norte como um aplicativo. Sempre que quiser rever alguma parte, clique no <b>(?)</b> no topo da tela. Bom uso!` },
 ];
@@ -12692,7 +12695,7 @@ function renderTourStep(step, el, i){
   $('tourCardBody').innerHTML = escapeHtmlKeepBold(step.body) + (step.example ? `<div class="example">${escapeHtmlKeepBold(step.example)}</div>` : '')
     + ((step.target && !el) ? '<div class="example"><b>Obs.:</b> ' + (step.missingNote ? escapeHtmlKeepBold(step.missingNote) : 'este item ainda não aparece na sua tela — ele surge sozinho quando você começar a usar o app (por exemplo, depois de criar a sua primeira conta).') + '</div>' : '');
   $('tourPrevBtn').style.visibility = i === 0 ? 'hidden' : 'visible';
-  $('tourNextBtn').textContent = i === TOUR_STEPS.length - 1 ? 'Concluir' : 'Próximo';
+  $('tourNextBtn').textContent = i === TOUR_STEPS.length - 1 ? 'Concluir' : (step.gate === 'account' && !state.accounts.length ? 'Criar minha conta agora' : 'Próximo');
   card.style.display = 'block';
   Object.values(parts).forEach(p => p.style.display = 'block');
   ring.style.display = 'block';
@@ -12847,12 +12850,30 @@ function offerTourModal(){
   root.querySelector('[data-action="start"]').addEventListener('click', () => { grabName(); startTour(); });
 }
 $('tourBtn').addEventListener('click', startTour);
-$('tourNextBtn').addEventListener('click', () => { if (tourState.index >= TOUR_STEPS.length - 1) endTour(); else tourGoToStep(tourState.index + 1); });
+let tourGateBusy = false;
+async function tourAccountGate(){
+  if (tourGateBusy) return;
+  tourGateBusy = true;
+  ['tourOverlayTop','tourOverlayBottom','tourOverlayLeft','tourOverlayRight','tourRing','tourCard'].forEach(id => $(id).style.display = 'none');
+  openAccountModal();
+  await tourWait(500);
+  await new Promise(res => { const t = setInterval(() => { if (!$('modalBackdrop').classList.contains('show')){ clearInterval(t); res(); } }, 300); });
+  tourGateBusy = false;
+  if (!tourState.active) return;
+  if (state.accounts.length){ showToast('Conta criada! Vamos continuar o tour.'); tourGoToStep(tourState.index + 1); }
+  else tourGoToStep(tourState.index);
+}
+$('tourNextBtn').addEventListener('click', () => {
+  if (tourGateBusy) return;
+  const st = TOUR_STEPS[tourState.index];
+  if (st && st.gate === 'account' && !state.accounts.length){ tourAccountGate(); return; }
+  if (tourState.index >= TOUR_STEPS.length - 1) endTour(); else tourGoToStep(tourState.index + 1);
+});
 $('tourPrevBtn').addEventListener('click', () => { if (tourState.index > 0) tourGoToStep(tourState.index - 1); });
 $('tourSkipBtn').addEventListener('click', endTour);
 window.addEventListener('resize', () => { if (tourState.active) renderTourStep(TOUR_STEPS[tourState.index], tourFindTarget(TOUR_STEPS[tourState.index]), tourState.index); });
 document.addEventListener('keydown', (e) => {
-  if (!tourState.active) return;
+  if (!tourState.active || tourGateBusy) return;
   if (e.key === 'Escape'){ e.preventDefault(); endTour(); }
   else if (e.key === 'ArrowRight' || e.key === 'Enter'){ e.preventDefault(); $('tourNextBtn').click(); }
   else if (e.key === 'ArrowLeft'){ e.preventDefault(); $('tourPrevBtn').click(); }
