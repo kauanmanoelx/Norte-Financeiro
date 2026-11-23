@@ -1433,6 +1433,17 @@ tr:hover td{background:var(--surface-2);}
 .color-swatch-custom input[type=color]{position:absolute; inset:-4px; width:calc(100% + 8px); height:calc(100% + 8px); border:none; padding:0; cursor:pointer; opacity:0;}
 .checkbox-row{display:flex; align-items:center; gap:8px; margin-top:4px;}
 .checkbox-row input{width:auto;}
+
+.na-widget{position:fixed; right:18px; bottom:18px; width:min(340px, calc(100vw - 28px)); z-index:230; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow-3); padding:16px 16px 14px; transform:translateY(24px); opacity:0; pointer-events:none; transition:opacity .28s var(--ease), transform .28s var(--ease);}
+.na-widget.show{transform:none; opacity:1; pointer-events:auto;}
+.na-head{display:flex; gap:12px; align-items:flex-start;}
+.na-ico{flex:0 0 38px; height:38px; border-radius:12px; display:grid; place-items:center; background:linear-gradient(135deg,#F3E2B0,#B98F48); color:#3a2a08; font-size:19px;}
+.na-t{font-family:var(--font-display); font-size:16px; line-height:1.25; margin-bottom:3px;}
+.na-s{font-size:12.5px; line-height:1.45; color:var(--text-muted,var(--text));opacity:.85;}
+.na-note{margin-top:10px; font-size:12px; line-height:1.4; padding:8px 10px; border-radius:10px; background:var(--bg); border:1px solid var(--border);}
+.na-actions{display:flex; gap:8px; margin-top:12px;}
+.na-actions .btn{flex:1; justify-content:center;}
+@media (max-width:880px){ .na-widget{right:50%; transform:translate(50%,24px); bottom:14px;} .na-widget.show{transform:translate(50%,0);} }
 .toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:var(--text); color:var(--bg); padding:11px 20px; border-radius:10px; font-size:13px; font-weight:600; z-index:100; box-shadow:var(--shadow-3); opacity:0; pointer-events:none; transition:opacity .25s var(--ease), transform .25s var(--ease);}
 .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px); pointer-events:auto;}
 
@@ -12724,9 +12735,9 @@ const TOUR_STEPS = [
     body: `Este indicador mostra se os seus dados estão sendo <b>salvos</b>: "Salvando…", "Salvo às…" quando já está na nuvem ou um aviso se algo falhar. Seus dados também ficam guardados neste aparelho, então um problema de internet não faz você perder o que lançou.`,
   },
   {
-    target: '#notifBtn', title: 'Notificações',
-    body: `O sino é onde você escolhe os avisos: <b>2 dias antes</b>, <b>1 dia antes</b> e <b>no dia</b> do vencimento das suas contas, além de um aviso ao adicionar uma transação. Ele também lista os próximos vencimentos dos próximos 7 dias. Toque em <b>Ativar</b> e permita as notificações no navegador. No iPhone, primeiro instale o app: Compartilhar → Adicionar à Tela de Início.`,
-    example: `Os avisos chegam com o app aberto ou em segundo plano. Para chegarem com o app totalmente fechado, é preciso uma configuração extra no servidor — a própria tela do sino mostra como está o seu aparelho.`,
+    target: '#notifBtn', title: 'Notificações', notifAsk: true,
+    body: `O sino é onde você escolhe os avisos: <b>2 dias antes</b>, <b>1 dia antes</b> e <b>no dia</b> do vencimento das suas contas, além de um aviso ao adicionar uma transação. Ele também lista os próximos vencimentos dos próximos 7 dias. Para isso funcionar, o aparelho precisa da sua <b>permissão</b>: use o cartão que apareceu na tela, ou o botão <b>Ativar</b> dentro do sino.`,
+    example: `Com a permissão dada e logado na sua conta, os avisos chegam <b>mesmo com o app fechado</b>. No iPhone, primeiro instale o app: Compartilhar → Adicionar à Tela de Início.`,
   },
   { target: '#tourBtn', title: 'Reabrir este tour quando quiser',
     body: `Se quiser rever qualquer parte, é só clicar neste ícone de interrogação, no canto superior direito da tela.` },
@@ -12768,6 +12779,57 @@ function tourFindTarget(step){
   return null;
 }
 const tourWait = (ms) => new Promise(r => setTimeout(r, ms));
+
+/* ---- Widget flutuante: pedir permissão de notificações (aparece no passo "Notificações" do tour) ---- */
+function notifAskEl(){
+  let w = $('notifAskWidget');
+  if (!w){ w = document.createElement('div'); w.id = 'notifAskWidget'; w.className = 'na-widget'; w.setAttribute('role','dialog'); w.setAttribute('aria-label','Permitir notificações'); document.body.appendChild(w); }
+  return w;
+}
+function notifAskHide(){ const w = $('notifAskWidget'); if (w) w.classList.remove('show'); }
+function notifAskRender(state, msg){
+  const w = notifAskEl();
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  const supported = 'Notification' in window;
+  const logged = !!(SUPA_ON && currentUser);
+  let note = '', canAsk = supported && !(ios && !standalone);
+  if (!supported) note = 'Este navegador não suporta notificações.';
+  else if (ios && !standalone) note = 'No iPhone, primeiro instale o app: Compartilhar → Adicionar à Tela de Início. Depois abra por lá e ative.';
+  else if (Notification.permission === 'denied') { canAsk = false; note = 'As notificações estão bloqueadas neste navegador. Libere nas configurações do site (cadeado ao lado do endereço) e tente de novo.'; }
+  else if (!logged) note = 'Para receber com o app fechado, entre na sua conta (nuvem).';
+  if (msg) note = msg;
+  const done = state === 'done';
+  w.innerHTML = `<div class="na-head"><div class="na-ico">🔔</div><div><div class="na-t">${done ? 'Notificações ativadas!' : 'Receber avisos de vencimento?'}</div><div class="na-s">${done ? 'Você será avisado antes das contas vencerem.' : 'O Norte avisa 2 dias antes, 1 dia antes e no dia de cada vencimento, mesmo com o app fechado.'}</div></div></div>${note ? `<div class="na-note">${escapeHtml(note)}</div>` : ''}`
+    + (done ? '' : `<div class="na-actions"><button class="btn btn-ghost btn-sm" data-na="later">Agora não</button>${canAsk ? `<button class="btn btn-primary btn-sm" data-na="allow" ${state === 'wait' ? 'disabled' : ''}>${state === 'wait' ? 'Aguardando…' : 'Permitir notificações'}</button>` : '<button class="btn btn-primary btn-sm" data-na="bell">Abrir o sino</button>'}</div>`);
+  w.onclick = async (e) => {
+    const b = e.target.closest('[data-na]'); if (!b) return;
+    const a = b.dataset.na;
+    if (a === 'later'){ notifAskHide(); return; }
+    if (a === 'bell'){ notifAskHide(); if (tourState.active) endTour(); openNotifModal(); return; }
+    if (a === 'allow'){
+      notifAskRender('wait');
+      try {
+        let perm = Notification.permission;
+        if (perm !== 'granted') perm = await notifAskPermission();
+        if (perm === 'granted'){
+          notifRegisterPeriodic();
+          const ok = await notifPushSubscribe();
+          await notifShowSystem({ title: 'Notificações ativadas', body: ok ? 'Tudo certo! Você será avisado antes dos vencimentos, mesmo com o app fechado.' : 'Ativadas neste aparelho.', tag: 'norte-welcome', view: null });
+          notifAskRender('done');
+          setTimeout(notifAskHide, 3200);
+          if (!ok) showToast(notifFriendlyErr(), 6000);
+        } else notifAskRender('idle', notifAskNote || 'A permissão não foi concedida. Você pode ativar depois pelo sino.');
+      } catch (err){ notifAskRender('idle', 'Não deu certo: ' + ((err && err.message) || err)); }
+    }
+  };
+}
+function notifAskShow(){
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted' && notifPushOk) return; // já está tudo ativo
+  notifAskRender('idle');
+  const w = notifAskEl(); requestAnimationFrame(() => w.classList.add('show'));
+}
 async function tourGoToStep(i){
   const step = TOUR_STEPS[i];
   tourState.index = i;
@@ -12788,6 +12850,7 @@ async function tourGoToStep(i){
   }
   tourEnsureVisible(el);
   renderTourStep(step, el, i);
+  if (step.notifAsk) notifAskShow(); else notifAskHide();
   // remede logo depois: gráficos e listas podem ter mudado a altura da página
   setTimeout(() => {
     if (tourState.active && tourState.index === i && token === tourState.token) renderTourStep(step, tourFindTarget(step), i);
@@ -12902,6 +12965,7 @@ function startTour(){
 }
 function endTour(){
   tourState.active = false;
+  notifAskHide();
   tourState.token = (tourState.token || 0) + 1;
   ['tourOverlayTop','tourOverlayBottom','tourOverlayLeft','tourOverlayRight','tourRing','tourCard'].forEach(id => $(id).style.display = 'none');
   $('sidebar').classList.remove('open'); $('sidebarScrim').classList.remove('show');
