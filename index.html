@@ -1189,7 +1189,7 @@ tr:hover td{background:var(--surface-2);}
 .nm-sw::after{content:''; position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:var(--text-faint); transition:transform .2s var(--ease), background .2s var(--ease);}
 .nm-toggle input:checked + .nm-sw{background:var(--accent-soft); border-color:var(--accent);}
 .nm-toggle input:checked + .nm-sw::after{transform:translateX(18px); background:var(--accent);}
-.nm-select{padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:var(--bg-elev); color:var(--text); font-family:inherit; font-size:13px;}
+.nm-select{flex:none; min-width:84px; padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:var(--bg-elev); color:var(--text); font-family:inherit; font-size:13px;}
 .nm-row{display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid var(--border-soft);}
 .nm-row:last-child{border-bottom:none;}
 .nm-row-main{flex:1; min-width:0;}
@@ -1201,6 +1201,27 @@ tr:hover td{background:var(--surface-2);}
 .nm-chip.hot{background:rgba(255,107,94,.18); color:#FF6B5E;}
 .nm-dot{width:9px; height:9px; border-radius:50%; background:var(--accent); flex:none;}
 .nm-due-tomorrow{background:#F5B942;} .nm-due-today{background:#FF6B5E;} .nm-tx-income{background:#4ade80;} .nm-tx-expense{background:#ff7b7b;}
+
+.nm-status{padding:16px; border-radius:16px; background:linear-gradient(180deg,var(--surface-2),var(--surface)); gap:14px;}
+.nm-status.on{background:linear-gradient(180deg,var(--accent-soft),var(--surface)); }
+.nm-status b{font-size:14.5px;}
+.nm-status .btn{flex:none;}
+@media (max-width:560px){ .nm-status{flex-wrap:wrap;} .nm-status>div:nth-child(2){flex:1 1 calc(100% - 64px) !important; min-width:0;} .nm-status>.btn{margin-left:54px;} }
+.nm-status.warn{border-color:#F5B942; background:linear-gradient(180deg,rgba(245,185,66,.12),var(--surface));} .nm-status.warn .nm-st-ico{background:rgba(245,185,66,.18); color:#F5B942;}
+.nm-test-hint{font-size:12px; color:var(--text-faint); line-height:1.5; margin:12px 2px 0;}
+.nm-sec{margin:22px 2px 8px; font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--text-faint);}
+.nm-card{border:1px solid var(--border-soft); border-radius:14px; background:var(--surface); padding:2px 14px;}
+.nm-card .nm-toggle{padding:13px 0;}
+.nm-fold{margin-top:10px; border:1px solid var(--border-soft); border-radius:14px; background:var(--surface);}
+.nm-fold>summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:10px; padding:13px 14px; font-size:13.5px; font-weight:600;}
+.nm-fold>summary::-webkit-details-marker{display:none;}
+.nm-fold>summary span{flex:1;}
+.nm-fold>summary em{font-style:normal; font-size:11.5px; font-weight:500; color:var(--text-faint);}
+.nm-fold>summary::after{content:''; width:7px; height:7px; border-right:2px solid var(--text-faint); border-bottom:2px solid var(--text-faint); transform:rotate(45deg); transition:transform .2s var(--ease); margin:-3px 2px 0 0;}
+.nm-fold[open]>summary::after{transform:rotate(-135deg); margin-top:3px;}
+.nm-fold-b{padding:0 14px 12px;}
+.nm-fold-b .nm-help{margin-top:0;}
+.nm-pre{white-space:pre-wrap; word-break:break-word; font-family:var(--font-mono); font-size:11px; line-height:1.6; margin:0; color:var(--text-dim);}
 .nm-diag{margin-top:16px; font-size:12px; color:var(--text-faint);}
 .nm-diag summary{cursor:pointer; padding:6px 0;}
 .nm-diag pre{white-space:pre-wrap; word-break:break-word; font-family:var(--font-mono); font-size:11px; line-height:1.6; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:10px; padding:10px 12px; margin:6px 0 0;}
@@ -10123,7 +10144,7 @@ function notifTimeAgo(ts){
 }
 function notifFriendlyErr(){
   const e = notifPushErr || '';
-  if (/push_subscriptions|push_schedule/.test(e) && /(does not exist|schema cache|relation|Could not find)/i.test(e)) return 'Falta criar as tabelas no Supabase: rode o arquivo norte_push_setup.sql (passo 1 do guia).';
+  if (/push_subscriptions|push_schedule/.test(e) && /(does not exist|schema cache|relation|Could not find)/i.test(e)) return 'As tabelas de avisos ainda não existem no Supabase (ou ele não atualizou). Rode o arquivo 1-norte_push_setup.sql no SQL Editor e tente de novo.';
   if (/row-level security|violates/i.test(e)) return 'O Supabase recusou gravar (política de segurança). Rode de novo o norte_push_setup.sql.';
   if (/push service error|AbortError/i.test(e)) return 'O serviço de push do navegador (Google/Edge) não respondeu neste aparelho.';
   if (/permission|NotAllowed|denied/i.test(e)) return 'O navegador não permitiu criar a inscrição de push. Confira se as notificações estão ligadas para o app nas configurações do Android.';
@@ -10195,12 +10216,12 @@ function openNotifModal(){
     if (k === 'denied') return box('off', 'Bloqueadas neste aparelho', 'Abra as Configurações do Android → Apps → Norte (ou Microsoft Edge) → Notificações e permita. No navegador: cadeado ao lado do endereço → Permissões → Notificações.', '<button class="btn btn-ghost btn-sm" data-nm="enable">Tentar de novo</button>') + ios;
     const androidHelp = notifAskNote ? `<div class="nm-help"><b>${escapeHtml(notifAskNote)}</b>${notifIsAndroid() ? `<ol><li>Abra as <b>Configurações do Android</b> → <b>Apps</b> → <b>Norte</b> (ou <b>Microsoft Edge</b>) → <b>Notificações</b> e deixe ligado / permitido.</li><li>Volte aqui e toque em <b>Ativar</b> de novo.</li></ol>` : ''}</div>` : '';
     if (k === 'default') return box('', 'Ainda não ativadas', 'Ative para receber avisos fora do app.', '<button class="btn btn-primary btn-sm" data-nm="enable">Ativar</button>') + androidHelp + ios;
-    if (k === 'push') return box('on', 'Ativadas — chegam com o app fechado', 'Você recebe 2 dias antes, 1 dia antes e no dia do vencimento, mesmo sem abrir o Norte.') + '<div style="margin-top:8px;"><button class="btn btn-ghost btn-sm" data-nm="disable">Desativar neste aparelho</button> <button class="btn btn-ghost btn-sm" data-nm="others">Remover outros navegadores</button><div style="font-size:12px;opacity:.75;margin-top:6px;">Chegando aviso repetido? Provavelmente o Norte está ativado em mais de um navegador (ex.: Chrome e Edge). Use "Remover outros navegadores" para ficar só com este.</div></div>';
-    if (k === 'nologin') return box('on', 'Ativadas só com o app aberto', 'Entre na sua conta (nuvem) para receber também com o app fechado.');
+    if (k === 'push') return box('on', 'Tudo certo: chegam com o app fechado', 'Você recebe 2 dias antes, 1 dia antes e no dia do vencimento, mesmo sem abrir o Norte.') + '<details class="nm-fold"><summary><span>Gerenciar este aparelho</span></summary><div class="nm-fold-b"><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn btn-ghost btn-sm" data-nm="disable">Desativar neste aparelho</button><button class="btn btn-ghost btn-sm" data-nm="others">Remover outros navegadores</button></div><div class="nm-hint">Chegando aviso repetido? Provavelmente o Norte está ativado em mais de um navegador (ex.: Chrome e Edge). "Remover outros navegadores" deixa só este.</div></div></details>';
+    if (k === 'nologin') return box('warn', 'Ativadas só com o app aberto', 'Entre na sua conta (nuvem) para receber também com o app fechado.');
     if (k === 'pusherr'){
       const svc = /push service error|AbortError/i.test(notifPushErr);
       const help = svc ? `<div class="nm-help"><b>O que tentar (nesta ordem):</b><ol><li>Confira se o celular está com internet (Wi‑Fi ou dados) e toque em <b>Tentar de novo</b>.</li><li>Configurações do Android → Apps → ${/EdgA/.test(navigator.userAgent) ? '<b>Microsoft Edge</b>' : '<b>Chrome</b>'} → Bateria → <b>Sem restrições</b>, e deixe os dados em segundo plano ligados.</li><li>Atualize o navegador e o <b>Google Play Services</b> na Play Store.</li>${/EdgA/.test(navigator.userAgent) ? '<li>Se continuar: abra o endereço do Norte no <b>Google Chrome</b>, menu ⋮ → <b>Instalar app</b>, e ative as notificações por lá. O Chrome costuma ser mais compatível com o push.</li>' : ''}</ol></div>` : '';
-      return box('on', 'Ativadas, mas o envio com o app fechado falhou', escapeHtml(notifFriendlyErr()), '<button class="btn btn-ghost btn-sm" data-nm="retry">Tentar de novo</button>') + help;
+      return box('warn', 'Quase lá: falta o envio com o app fechado', escapeHtml(notifFriendlyErr()), '<button class="btn btn-primary btn-sm" data-nm="retry">Tentar de novo</button>') + help;
     }
     return box('on', 'Ativadas neste aparelho', 'Chegam na barra de notificações enquanto o app estiver aberto ou em segundo plano.');
   };
@@ -10212,20 +10233,21 @@ function openNotifModal(){
   openModal(`<div class="modal-head"><h3>Notificações</h3><button class="btn btn-icon btn-ghost" data-action="close" aria-label="Fechar">✕</button></div>
     <div class="modal-body">
       <div id="nmStatus">${statusHtml(false)}</div>
-      <h4 class="nm-h">O que avisar</h4>
+      <div class="nm-sec">O que avisar</div>
+      <div class="nm-card">
       ${toggle('nmTwoDays', '2 dias antes do vencimento', 'Ex.: "Em 2 dias vence: Curso · parcela 1/6"', prefs.twoDays)}
       ${toggle('nmDayBefore', '1 dia antes do vencimento', 'Ex.: "Amanhã vence: Curso · parcela 1/6"', prefs.dayBefore)}
       ${toggle('nmDayOf', 'No dia do vencimento', 'Ex.: "Hoje vence: Aluguel · débito automático"', prefs.dayOf)}
       ${toggle('nmNewTx', 'Quando eu adicionar uma transação', 'Receita ou despesa nova', prefs.newTx)}
       <div class="nm-toggle" style="cursor:default;"><div><div class="nm-tl">Receber a partir das</div><div class="nm-ts">Não precisa ser exato: chega perto desse horário</div></div><select id="nmHour" class="nm-select">${hourOpts}</select></div>
-      <details class="nm-diag" style="margin-top:6px;"><summary>A notificação não aparece como pop-up na tela?</summary><div class="nm-help">O pop-up no topo da tela (e o aviso na tela bloqueada) é uma configuração do <b>Android</b>, não do app. Para ligar:<ol><li>Segure o dedo sobre uma notificação do Norte na barra e toque em <b>Configurações</b> (ou vá em Configurações do Android → Apps → <b>Norte</b> / <b>Chrome</b> → Notificações).</li><li>Na categoria do Norte (ou "Sites"), mude a importância para <b>Urgente</b> (som e pop-up na tela).</li><li>Em celulares <b>Xiaomi / POCO / Redmi</b>: ligue também <b>Notificações flutuantes</b> e <b>Tela de bloqueio</b> para o app.</li><li>Confira se o modo <b>Não perturbe</b> está desligado.</li></ol></div></details>
-      <h4 class="nm-h">Próximos vencimentos (7 dias)</h4>
-      ${upHtml}
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:18px;"><h4 class="nm-h" style="margin:0;">Últimas notificações</h4>${log.length ? '<button class="btn btn-ghost btn-sm" data-nm="clear">Limpar</button>' : ''}</div>
-      <div style="margin-top:8px;">${logHtml}</div>
-      <details class="nm-diag"><summary>Diagnóstico (se algo não funcionar)</summary><pre id="nmDiag">${escapeHtml(notifDiagnostics())}</pre></details>
+      </div>
+      <details class="nm-fold"><summary><span>Não aparece como pop-up na tela?</span><em>Android</em></summary><div class="nm-fold-b"><div class="nm-help">O pop-up no topo da tela (e o aviso na tela bloqueada) é uma configuração do <b>Android</b>, não do app. Para ligar:<ol><li>Segure o dedo sobre uma notificação do Norte na barra e toque em <b>Configurações</b> (ou vá em Configurações do Android → Apps → <b>Norte</b> / <b>Chrome</b> → Notificações).</li><li>Na categoria do Norte (ou "Sites"), mude a importância para <b>Urgente</b> (som e pop-up na tela).</li><li>Em celulares <b>Xiaomi / POCO / Redmi</b>: ligue também <b>Notificações flutuantes</b> e <b>Tela de bloqueio</b> para o app.</li><li>Confira se o modo <b>Não perturbe</b> está desligado.</li></ol></div></div></details>
+      <details class="nm-fold" ${upcoming.length ? 'open' : ''}><summary><span>Próximos vencimentos</span><em>${upcoming.length ? upcoming.length + (upcoming.length === 1 ? ' item' : ' itens') + ' · 7 dias' : '7 dias'}</em></summary><div class="nm-fold-b">${upHtml}</div></details>
+      <details class="nm-fold"><summary><span>Últimas notificações</span><em>${log.length || 'nenhuma'}</em></summary><div class="nm-fold-b">${logHtml}${log.length ? '<div style="text-align:right; margin-top:6px;"><button class="btn btn-ghost btn-sm" data-nm="clear">Limpar lista</button></div>' : ''}</div></details>
+      <div class="nm-test-hint">Para conferir se tudo funciona: toque em <b>Enviar teste</b> e <b>feche o app</b>. Em cerca de 20 segundos chega uma notificação.</div>
+      <details class="nm-fold"><summary><span>Ajuda e diagnóstico</span><em>se algo não funcionar</em></summary><div class="nm-fold-b"><pre id="nmDiag" class="nm-pre">${escapeHtml(notifDiagnostics())}</pre></div></details>
     </div>
-    <div class="modal-foot"><button class="btn btn-ghost" data-nm="test">Enviar teste com app fechado</button><button class="btn btn-primary" data-action="close">Fechar</button></div>`);
+    <div class="modal-foot"><button class="btn btn-ghost" data-nm="test">Enviar teste</button><button class="btn btn-primary" data-action="close">Fechar</button></div>`);
   const root = $('modalContent');
   const refreshStatus = (waiting) => { const st = $('nmStatus'); if (st) st.innerHTML = statusHtml(waiting); const dg = $('nmDiag'); if (dg) dg.textContent = notifDiagnostics(); };
   const saveFromUi = () => {
@@ -10306,6 +10328,10 @@ function openNotifModal(){
       notifUpdateBadge(); openNotifModal();
     }
   };
+  // se já tem permissão e está logado mas o envio não estava ativo (erro antigo), tenta de novo sozinho
+  if ('Notification' in window && Notification.permission === 'granted' && SUPA_ON && currentUser && !notifPushOk){
+    notifPushSubscribe().then(() => { if ($('nmStatus')) refreshStatus(false); }).catch(() => {});
+  }
   // marca tudo como lido
   const all = notifLog(); all.forEach(x => x.read = true);
   try { localStorage.setItem(NOTIF_LOG_KEY, JSON.stringify(all)); } catch (e){}
