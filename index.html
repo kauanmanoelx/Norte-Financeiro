@@ -5133,15 +5133,40 @@ function ceDrawChart(inPeriod, p, cat, kids){
   if (!datasets.length) return;
   const th = chartTheme();
   const ff = getComputedStyle(document.body).fontFamily;
-  datasets.forEach(ds => { ds.borderRadius = 6; ds.borderSkipped = false; ds.maxBarThickness = daily ? 22 : 38; });
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const bgCard = getCss('--surface') || '#17171a';
+  const vis = (hex) => { // clareia cores muito escuras para aparecerem no tema escuro
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim()); if (!m || !dark) return hex;
+    const n = parseInt(m[1], 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255; if (lum >= 0.42) return hex;
+    const k = Math.min(0.7, (0.42 - lum) * 1.9 + 0.2), mix = (c) => Math.round(c + (255 - c) * k);
+    return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
+  };
+  datasets.forEach(ds => { ds.backgroundColor = vis(ds.backgroundColor); ds.borderRadius = 6; ds.borderSkipped = false; ds.borderColor = bgCard; ds.borderWidth = datasets.length > 1 ? 2 : 0; ds.maxBarThickness = daily ? 22 : 46; });
   const opts = niceChartOpts(th, datasets.length > 1, ff, {
     nonneg: true,
     footer: datasets.length > 1 ? (items) => 'Total: ' + fmtBRL(items.reduce((a, i) => a + i.parsed.y, 0)) : undefined
   });
+  opts.layout.padding.top = 24;
+  if (datasets.length > 1) opts.plugins.legend.labels.generateLabels = (chart) => {
+    const base = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+    base.forEach(l => { const ds = chart.data.datasets[l.datasetIndex]; l.text = `${ds.label} · ${fmtBRL(ds._sum)}`; l.fontColor = th.text; });
+    return base;
+  };
   opts.scales.x.stacked = true; opts.scales.y.stacked = true;
   opts.scales.x.ticks.maxRotation = 0; opts.scales.x.ticks.autoSkip = true; opts.scales.x.ticks.maxTicksLimit = daily ? 8 : 12;
   opts.plugins.tooltip.callbacks.title = (items) => items[0] ? (daily ? items[0].label : items[0].label) : '';
-  charts.chartCatExp = new Chart(canvas, { type: 'bar', data: { labels, datasets }, options: opts });
+  const totalsPlugin = { id: 'ceTotals', afterDatasetsDraw(chart){
+    const { ctx } = chart; const metas = chart.data.datasets.map((_, i) => chart.getDatasetMeta(i));
+    ctx.save(); ctx.font = `700 11.5px ${ff}`; ctx.fillStyle = dark ? '#EDEDED' : '#222'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    chart.data.labels.forEach((_, i) => {
+      let tot = 0, top = null;
+      metas.forEach((m, di) => { const v = chart.data.datasets[di].data[i] || 0; if (v > 0 && !m.hidden){ tot += v; const el = m.data[i]; if (el && (top === null || el.y < top)) top = el.y; } });
+      if (tot > 0 && top !== null){ const x = metas[0].data[i].x; ctx.fillText(chartShort(tot), x, top - 5); }
+    });
+    ctx.restore();
+  } };
+  charts.chartCatExp = new Chart(canvas, { type: 'bar', data: { labels, datasets }, options: opts, plugins: [totalsPlugin] });
   // resumo acima do gráfico
   const totals = keys.map((k, i) => datasets.reduce((a, ds) => a + (ds.data[i] || 0), 0));
   const peak = Math.max(...totals), pi = totals.indexOf(peak), sum = totals.reduce((a, b) => a + b, 0);
