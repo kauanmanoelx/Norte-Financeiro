@@ -10022,6 +10022,21 @@ function notifSameKey(sub){
 }
 // O primeiro registro no serviço de push do navegador (Google/Edge) às vezes falha
 // com "push service error". Limpa qualquer inscrição velha e tenta de novo.
+function notifTimeout(promise, ms, msg){
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(msg)), ms);
+    Promise.resolve(promise).then(v => { clearTimeout(t); resolve(v); }, e => { clearTimeout(t); reject(e); });
+  });
+}
+// pega o service worker sem ficar esperando pra sempre (registra de novo se preciso)
+async function notifGetReg(){
+  let reg = null;
+  try { reg = await navigator.serviceWorker.getRegistration(); } catch (e){}
+  if (!reg){ try { reg = await navigator.serviceWorker.register('sw.js'); } catch (e){} }
+  if (!reg) throw new Error('O service worker não está registrado. Feche e abra o app de novo (ou atualize a página).');
+  if (reg.active) return reg;
+  return await notifTimeout(navigator.serviceWorker.ready, 12000, 'O service worker não ficou pronto. Feche o app, abra de novo e tente outra vez.');
+}
 async function notifSubscribeWithRetry(reg){
   const opts = { userVisibleOnly: true, applicationServerKey: notifB64ToBytes(VAPID_PUBLIC_KEY) };
   let lastErr = null;
@@ -10030,7 +10045,7 @@ async function notifSubscribeWithRetry(reg){
       let sub = await reg.pushManager.getSubscription();
       if (sub && !notifSameKey(sub)){ await sub.unsubscribe(); sub = null; }
       if (sub) return sub;
-      return await reg.pushManager.subscribe(opts);
+      return await notifTimeout(reg.pushManager.subscribe(opts), 20000, 'O serviço de push do navegador não respondeu (push service error). Confira a internet e tente de novo.');
     } catch (e){
       lastErr = e;
       try { const old = await reg.pushManager.getSubscription(); if (old) await old.unsubscribe(); } catch (e2){}
@@ -10046,16 +10061,16 @@ async function notifPushSubscribe(){
   if (!SUPA_ON || !currentUser){ notifPushErr = 'Entre na sua conta para receber os avisos com o app fechado.'; return false; }
   if (!('Notification' in window) || Notification.permission !== 'granted'){ notifPushErr = 'Permissão de notificação ainda não concedida.'; return false; }
   try {
-    const reg = await navigator.serviceWorker.ready;
+    const reg = await notifGetReg();
     const sub = await notifSubscribeWithRetry(reg);
     const j = sub.toJSON();
-    const { error } = await supa.from('push_subscriptions').upsert({
+    const { error } = await notifTimeout(supa.from('push_subscriptions').upsert({
       user_id: currentUser.id, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth,
       user_agent: navigator.userAgent.slice(0, 200), tz: notifTz(), updated_at: new Date().toISOString(),
-    }, { onConflict: 'endpoint' });
+    }, { onConflict: 'endpoint' }), 15000, 'O Supabase não respondeu ao gravar o aparelho. Confira a internet e se você está logado.');
     if (error) throw error;
     notifPushOk = true;
-    await notifSyncSchedule(true);
+    try { await notifTimeout(notifSyncSchedule(true), 15000, 'tempo esgotado ao enviar os vencimentos'); } catch (e3){}
     return true;
   } catch (e){
     notifPushOk = false;
@@ -10211,6 +10226,7 @@ function openNotifModal(){
     const k = notifPushStatusKind();
     const ios = notifIsIos() && !notifIsStandalone() ? `<p class="nm-hint">No iPhone/iPad, as notificações só funcionam com o app instalado: toque em Compartilhar e depois em <b>Adicionar à Tela de Início</b>, abra o Norte pelo ícone e ative aqui.</p>` : '';
     const box = (cls, title, sub, btn) => `<div class="nm-status ${cls}"><div class="nm-st-ico">${ICONS.bell}</div><div style="flex:1;"><b>${title}</b><div class="nm-st-sub">${sub}</div></div>${btn || ''}</div>`;
+    if (waiting === 'work') return box('', 'Ativando o envio com o app fechado…', 'Registrando este aparelho no servidor. Leva alguns segundos.');
     if (waiting) return box('', 'Aguardando você permitir…', 'Olhe o aviso do navegador (pode aparecer lá em cima ou na barra de endereço) e toque em <b>Permitir</b>.') + ios;
     if (k === 'unsupported') return box('off', 'Sem suporte neste navegador', 'Os avisos dentro do app continuam funcionando.') + ios;
     if (k === 'denied') return box('off', 'Bloqueadas neste aparelho', 'Abra as Configurações do Android → Apps → Norte (ou Microsoft Edge) → Notificações e permita. No navegador: cadeado ao lado do endereço → Permissões → Notificações.', '<button class="btn btn-ghost btn-sm" data-nm="enable">Tentar de novo</button>') + ios;
@@ -10273,11 +10289,12 @@ function openNotifModal(){
           perm = await notifAskPermission();
         }
         if (perm === 'granted'){
-          notifRegisterPeriodic();
+          refreshStatus('work');
+          try { notifRegisterPeriodic(); } catch (e0){}
           const ok = await notifPushSubscribe();
           refreshStatus(false);
-          await notifShowSystem({ title: 'Notificações ativadas', body: ok ? 'Tudo certo! Você será avisado antes dos vencimentos, mesmo com o app fechado.' : 'Ativadas neste aparelho.', tag: 'norte-welcome', view: null });
-          showToast(ok ? 'Notificações ativadas!' : notifFriendlyErr(), 6000);
+          showToast(ok ? 'Notificações ativadas!' : notifFriendlyErr(), 7000);
+          try { await notifTimeout(notifShowSystem({ title: 'Notificações ativadas', body: ok ? 'Tudo certo! Você será avisado antes dos vencimentos, mesmo com o app fechado.' : 'Ativadas neste aparelho.', tag: 'norte-welcome', view: null }), 6000, 'x'); } catch (e1){}
         } else {
           refreshStatus(false);
           showToast(notifAskNote || 'A permissão não foi concedida.', 6000);
@@ -12839,9 +12856,9 @@ function notifAskRender(state, msg){
         let perm = Notification.permission;
         if (perm !== 'granted') perm = await notifAskPermission();
         if (perm === 'granted'){
-          notifRegisterPeriodic();
+          try { notifRegisterPeriodic(); } catch (e0){}
           const ok = await notifPushSubscribe();
-          await notifShowSystem({ title: 'Notificações ativadas', body: ok ? 'Tudo certo! Você será avisado antes dos vencimentos, mesmo com o app fechado.' : 'Ativadas neste aparelho.', tag: 'norte-welcome', view: null });
+          try { await notifTimeout(notifShowSystem({ title: 'Notificações ativadas', body: ok ? 'Tudo certo! Você será avisado antes dos vencimentos, mesmo com o app fechado.' : 'Ativadas neste aparelho.', tag: 'norte-welcome', view: null }), 6000, 'x'); } catch (e1){}
           notifAskRender('done');
           setTimeout(notifAskHide, 3200);
           if (!ok) showToast(notifFriendlyErr(), 6000);
